@@ -29,9 +29,6 @@ public:
 	MainWindow(QWidget *parent = 0);
 	~MainWindow();
 
-public:
-	static QList<Task*>* taskList;//全局
-
 private:
 	Ui::MainWindow ui;
 
@@ -41,15 +38,12 @@ private:
 
 	AddView *addView;
 	SetView *setView;
-	bool toolBarView;//全局
 
 	QFont font;
 	QPalette font_pe;
 	QPalette palette; 
 
 	QToolBar *MainToolBar;
-
-	QAction *refresh;//列表
 	QAction *add;//添加
 	QAction *history;//历史记录
 	QAction *lookfor;//查找
@@ -57,28 +51,22 @@ private:
 	QAction *about;//关于
 	QAction *shutdown;//关闭
 
-	QAction *back;//返回
-	QAction *audio;//音频
-	QAction *vedio;//视频
-
+	QList<Task*>* taskList;//全局
 	QList<Task*>::iterator TaskListHead;
 	int TaskListSize;
+	int ListNum;
 	QList<QWidget*>* WigetList;
 	QWidget *Base;
-	QWidget *dockContents;
 	QLabel *taskName;
-	int ListNum;
-	QMouseEvent *eNote;
 	QProgressBar *progressBar;
-	QPushButton *remove;//移除
-	QPushButton *start;//开始
-	QPushButton *stop;//停止
-	QPushButton *info;//详情
+	QPushButton *start;
+	QPushButton *stop;
+	QPushButton *remove;
+	QPushButton *info;
 
 	QRect m_areaMovable;//可移动窗口的区域，鼠标只有在该区域按下才能移动窗口
-	bool m_bPressed;//鼠标按下标志（不分左右键）
 	QPoint m_ptPress;//鼠标按下的初始位置
-
+	bool m_bPressed;//鼠标按下标志（不分左右键）
 	void setAreaMovable(const QRect rt);
 	void mousePressEvent(QMouseEvent *);
 	void mouseMoveEvent(QMouseEvent *);
@@ -90,7 +78,6 @@ private:
 	void updateOpacity(int);
 	void updateList(Task*);
 
-	void createList();
 	void Add();
 	void History();
 	void Lookfor();

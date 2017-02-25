@@ -69,7 +69,6 @@ signals:
 	void VedioOK();
 	void VedioBack();
 
-	//void setList(Task*);
 };
 
 #endif // AddView_H

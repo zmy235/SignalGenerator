@@ -213,18 +213,6 @@ void AddView::AudioOK()
 	task->state = false;
 	task->type = tr("Audio");
 
-	qDebug() << "ListSize" <<
-		MainWindow::taskList->size() <<
-		task->type << endl <<
-		task->filePath << endl <<
-		task->name << endl <<
-		task->size << endl <<
-		task->progress << endl <<
-		task->state << endl <<
-		task->time << endl;
-	MainWindow::taskList->append(task);
-	qDebug() << "ListSize" << MainWindow::taskList->size();
-
 	emit updateList(task);
 
 	close();
@@ -236,17 +224,11 @@ void AddView::VedioOK()
 	task->progress = 0;
 	task->state = false;
 	task->type = tr("Vedio");
-	MainWindow::taskList->append(task);
 
 	emit updateList(task);
 
 	close();
 }
-
-//void AddView::setList(Task*)
-//{
-//	emit updateList(task);
-//}
 
 void AddView::AudioBack()
 {
