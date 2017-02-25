@@ -3,6 +3,7 @@
 #include "AddView.h"
 #include "Task.h"
 
+#include<Windows.h>
 #include<QWidget>
 #include<QPalette>
 #include<QFont>
@@ -24,8 +25,8 @@ AddView::AddView(QWidget *parent) : BaseWidget(parent)
 
 	task = new Task();
 
-	//audioTypes = { tr("0"), tr("1"), tr("2"), tr("3"), tr("4"), tr("5"), tr("6"), tr("7"), tr("8"), tr("9") };
-	//vedioTypes ={ tr("AV"), tr("VGA"), tr("RGB"), tr("YPbPr"), tr("LVDS"), tr("DVI"), tr("SDI"), tr("FPDLINK"), tr("CameraLink") };
+	audioTypes = { tr("0"), tr("1"), tr("2"), tr("3"), tr("4"), tr("5"), tr("6"), tr("7"), tr("8"), tr("9") };
+	vedioTypes = { tr("AV"), tr("VGA"), tr("RGB"), tr("YPbPr"), tr("LVDS"), tr("DVI"), tr("SDI"), tr("FPDLINK"), tr("CameraLink") };
 
 	//Font
 	font = QFont("Times", 16, 32, false);
@@ -68,11 +69,12 @@ AddView::~AddView()
 
 }
 
-
 void AddView::addAudio()
 {
 	//隐藏BaseView
 	BaseView->hide();
+
+	task->type = "audio";
 
 	//创建AudioView
 	AudioView = new QWidget(this);
@@ -115,11 +117,12 @@ void AddView::addAudio()
 
 }
 
-
 void AddView::addVedio()
 {
 	//BaseView
 	BaseView->hide();
+
+	task->type = "vedio";
 
 	VedioView = new QWidget(this);
 	VedioView->setFixedSize(500, 350);
@@ -162,7 +165,6 @@ void AddView::addVedio()
 	VedioView->show();
 }
 
-
 void AddView::AudioFile()
 {
 	QString file_path = QFileDialog::getOpenFileName(this, "选择文件", "./", "Audio(*.mp3)");
@@ -175,7 +177,6 @@ void AddView::AudioFile()
 	task->size = file_size;
 	//task->info = file_info;
 }
-
 
 void AddView::VedioFile()
 {
@@ -190,14 +191,12 @@ void AddView::VedioFile()
 	//task->info = file_info;
 }
 
-
 void AddView::on_sel_audio(const int &text)
 {
 	QString str = "You select " + audioTypes[text];
 	QMessageBox::information(this, tr("Info"), str);
 	//task->info = str;
 }
-
 
 void AddView::on_sel_vedio(const int &text)
 {
@@ -223,9 +222,10 @@ void AddView::AudioOK()
 		task->progress << endl <<
 		task->state << endl <<
 		task->time << endl;
-
 	MainWindow::taskList->append(task);
 	qDebug() << "ListSize" << MainWindow::taskList->size();
+
+	emit updateList(task);
 
 	close();
 }
@@ -237,8 +237,16 @@ void AddView::VedioOK()
 	task->state = false;
 	task->type = tr("Vedio");
 	MainWindow::taskList->append(task);
+
+	emit updateList(task);
+
 	close();
 }
+
+//void AddView::setList(Task*)
+//{
+//	emit updateList(task);
+//}
 
 void AddView::AudioBack()
 {

@@ -38,14 +38,14 @@ private:
 	QSlider *hSlider;
 
 
-	signals:
+signals:
 	void updateOpacity(int);
-	void updateVH(int);
+	void updateVH(bool);
 
 	private slots:
-	void Back();
 	void setOpacity(int);
 	void setVH(bool);
+	void Back();
 };
 
 #endif // SetView_H

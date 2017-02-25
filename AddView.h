@@ -51,6 +51,10 @@ private:
 	QPushButton *VedioFileButton;//Ìí¼Ó
 	QPushButton *VedioOKButton;//Ìí¼Ó
 
+signals:
+
+	void updateList(Task*);
+
 	private slots:
 
 	void addAudio();
@@ -64,6 +68,8 @@ private:
 	void on_sel_vedio(const int &);
 	void VedioOK();
 	void VedioBack();
+
+	//void setList(Task*);
 };
 
 #endif // AddView_H

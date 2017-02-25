@@ -2,7 +2,7 @@
 #define MainWindow_H
 
 #include <QtWidgets/QMainWindow>
-#include "ui_signalgenerator.h"
+#include "ui_MainWindow.h"
 
 //所用到的类的前置声明
 class    Action;
@@ -18,6 +18,7 @@ class    QPushButton;
 class    QLabel;
 class    QDateTime;
 class    Task;
+class    AddView;
 class    SetView;
 
 class MainWindow : public QMainWindow
@@ -32,12 +33,13 @@ public:
 	static QList<Task*>* taskList;//全局
 
 private:
-	Ui::SignalGeneratorClass ui;
+	Ui::MainWindow ui;
 
 private:
 	void createActions();
 	void createToolBars();
 
+	AddView *addView;
 	SetView *setView;
 	bool toolBarView;//全局
 
@@ -86,6 +88,8 @@ private:
 
 	void updateVH(bool);
 	void updateOpacity(int);
+	void updateList(Task*);
+
 	void createList();
 	void Add();
 	void History();

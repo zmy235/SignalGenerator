@@ -31,6 +31,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 	ListNum = 0;
 	WigetList = new QList<QWidget*>();
 	setView = new SetView();
+	addView = new AddView();
 	toolBarView = true;
 
 	//QTimer对象  
@@ -72,10 +73,88 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 
 	connect(setView, &SetView::updateVH, this, &MainWindow::updateVH);
 	connect(setView, &SetView::updateOpacity, this, &MainWindow::updateOpacity);
+	connect(addView, &AddView::updateList, this, &MainWindow::updateList);
+
 }
 
 MainWindow::~MainWindow()
 {
+}
+
+
+void MainWindow::updateList(Task* task)
+{
+	TaskListHead = MainWindow::taskList->begin();
+	TaskListSize = MainWindow::taskList->size();
+	qDebug() << "===========================================";
+	//主要根据taskList的具体信息来绘制界面
+	for (auto i = TaskListHead + ListNum; ListNum < TaskListSize&&i != MainWindow::taskList->end(); i++, ListNum++)
+	{
+		qDebug() << (*i)->type << endl << (*i)->filePath << endl <<
+			(*i)->name << endl << (*i)->size << endl << (*i)->progress << endl <<
+			(*i)->state << endl << (*i)->time << endl << TaskListSize << endl;
+
+		WigetList->push_back(new QWidget(Base));
+		WigetList->at(ListNum)->setFixedSize(650, 45);
+		WigetList->at(ListNum)->setGeometry(QRect(0, (i - TaskListHead) * 50, 650, 45));
+		WigetList->at(ListNum)->setWindowFlags(Qt::FramelessWindowHint);
+		WigetList->at(ListNum)->setPalette(palette);
+
+		taskName = new QLabel(WigetList->at(ListNum));
+		taskName->setText((*i)->name);
+		taskName->setFixedHeight(45);
+		taskName->setMaximumWidth(120);
+		taskName->setGeometry(QRect(0, 0, 120, 45));
+		taskName->setFont(font);
+		taskName->setPalette(font_pe);
+
+		progressBar = new QProgressBar(WigetList->at(ListNum));
+		progressBar->setObjectName(QString::number(ListNum));//QString::fromUtf8("progressBar")
+		progressBar->setFixedSize(300, 45);
+		progressBar->setGeometry(QRect(130, 0, 300, 45));
+		progressBar->setFont(font);
+		progressBar->setInputMethodHints(Qt::ImhNone);
+		progressBar->setValue((*i)->progress);
+		progressBar->setAlignment(Qt::AlignCenter);
+		progressBar->setTextVisible(true);
+		progressBar->setInvertedAppearance(false);
+
+		start = new QPushButton(QIcon("./Resources/start.png"), tr(""), WigetList->at(ListNum));
+		start->setObjectName(QString::number(ListNum));
+		start->setFixedSize(QSize(45, 45));
+		start->setIconSize(QSize(45, 45));
+		start->setGeometry(QRect(450, 0, 45, 45));
+		connect(start, SIGNAL(clicked()), this, SLOT(Start()));
+
+		stop = new QPushButton(QIcon("./Resources/stop.png"), tr(""), WigetList->at(ListNum));
+		stop->setObjectName(QString::number(ListNum));
+		stop->setFixedSize(QSize(45, 45));
+		stop->setIconSize(QSize(45, 45));
+		stop->setGeometry(QRect(500, 0, 45, 45));
+		connect(stop, SIGNAL(clicked()), this, SLOT(Stop()));
+
+		remove = new QPushButton(QIcon("./Resources/remove.png"), tr(""), WigetList->at(ListNum));
+		remove->setObjectName(QString::number(ListNum));
+		remove->setFixedSize(QSize(45, 45));
+		remove->setIconSize(QSize(45, 45));
+		remove->setGeometry(QRect(550, 0, 45, 45));
+		connect(remove, SIGNAL(clicked()), this, SLOT(Remove()));
+
+		info = new QPushButton(QIcon("./Resources/info.png"), tr(""), WigetList->at(ListNum));
+		info->setObjectName(QString::number(ListNum));
+		info->setFixedSize(QSize(45, 45));
+		info->setIconSize(QSize(45, 45));
+		info->setGeometry(QRect(600, 0, 45, 45));
+		connect(info, SIGNAL(clicked()), this, SLOT(Info()));
+
+		//for (auto j = WigetList->begin(); j != WigetList->end(); j++)
+		//{
+		//	(*j)->findChild<QProgressBar*>("progressBar", Qt::FindDirectChildrenOnly)->setValue(10 * (j - (WigetList->begin())));
+		//}
+
+		WigetList->at(ListNum)->show();
+	}
+
 }
 
 void MainWindow::updateVH(bool value)
@@ -181,97 +260,16 @@ void MainWindow::setAreaMovable(const QRect rt)
 
 void MainWindow::createList()
 {
-	TaskListHead = MainWindow::taskList->begin();
-	TaskListSize = MainWindow::taskList->size();
-
-	//主要根据taskList的具体信息来绘制界面
-	for (auto i = TaskListHead + ListNum; ListNum < TaskListSize&&i != MainWindow::taskList->end(); i++, ListNum++)
-	{
-		qDebug() << (*i)->type << endl << (*i)->filePath << endl <<
-			(*i)->name << endl << (*i)->size << endl << (*i)->progress << endl <<
-			(*i)->state << endl << (*i)->time << endl << TaskListSize << endl;
-
-		WigetList->push_back(new QWidget(Base));
-		WigetList->at(ListNum)->setFixedSize(650, 45);
-		WigetList->at(ListNum)->setGeometry(QRect(0, (i - TaskListHead) * 50, 650, 45));
-		WigetList->at(ListNum)->setWindowFlags(Qt::FramelessWindowHint);
-		WigetList->at(ListNum)->setPalette(palette);
-
-		taskName = new QLabel(WigetList->at(ListNum));
-		taskName->setText((*i)->name);
-		taskName->setFixedHeight(45);
-		taskName->setMaximumWidth(120);
-		taskName->setGeometry(QRect(0, 0, 120, 45));
-		taskName->setFont(font);
-		taskName->setPalette(font_pe);
-
-		progressBar = new QProgressBar(WigetList->at(ListNum));
-		progressBar->setObjectName(QString::number(ListNum));//QString::fromUtf8("progressBar")
-		progressBar->setFixedSize(300, 45);
-		progressBar->setGeometry(QRect(130, 0, 300, 45));
-		progressBar->setFont(font);
-		progressBar->setInputMethodHints(Qt::ImhNone);
-		progressBar->setValue((*i)->progress);
-		progressBar->setAlignment(Qt::AlignCenter);
-		progressBar->setTextVisible(true);
-		progressBar->setInvertedAppearance(false);
-
-		start = new QPushButton(QIcon("./Resources/start.png"), tr(""), WigetList->at(ListNum));
-		start->setObjectName(QString::number(ListNum));
-		start->setFixedSize(QSize(45, 45));
-		start->setIconSize(QSize(45, 45));
-		start->setGeometry(QRect(450, 0, 45, 45));
-		connect(start, SIGNAL(clicked()), this, SLOT(Start()));
-
-		stop = new QPushButton(QIcon("./Resources/stop.png"), tr(""), WigetList->at(ListNum));
-		stop->setObjectName(QString::number(ListNum));
-		stop->setFixedSize(QSize(45, 45));
-		stop->setIconSize(QSize(45, 45));
-		stop->setGeometry(QRect(500, 0, 45, 45));
-		connect(stop, SIGNAL(clicked()), this, SLOT(Stop()));
-
-		remove = new QPushButton(QIcon("./Resources/remove.png"), tr(""), WigetList->at(ListNum));
-		remove->setObjectName(QString::number(ListNum));
-		remove->setFixedSize(QSize(45, 45));
-		remove->setIconSize(QSize(45, 45));
-		remove->setGeometry(QRect(550, 0, 45, 45));
-		connect(remove, SIGNAL(clicked()), this, SLOT(Remove()));
-
-		info = new QPushButton(QIcon("./Resources/info.png"), tr(""), WigetList->at(ListNum));
-		info->setObjectName(QString::number(ListNum));
-		info->setFixedSize(QSize(45, 45));
-		info->setIconSize(QSize(45, 45));
-		info->setGeometry(QRect(600, 0, 45, 45));
-		connect(info, SIGNAL(clicked()), this, SLOT(Info()));
-
-		//for (auto j = WigetList->begin(); j != WigetList->end(); j++)
-		//{
-		//	(*j)->findChild<QProgressBar*>("progressBar", Qt::FindDirectChildrenOnly)->setValue(10 * (j - (WigetList->begin())));
-		//}
-
-		WigetList->at(ListNum)->show();
-	}
-
 }
 
 void MainWindow::Add()
 {
-	AddView *addView = new AddView();
 	addView->show();
 }
 
 void MainWindow::History()
 {
-	//测试项
-	Task* test = new Task;
-	test->name = QString::number(ListNum);
-	test->size = 12000;
-	test->filePath = "QQQ";
-	test->time = QDateTime::currentDateTime();
-	test->progress = 23;
-	test->state = false;
-	test->type = tr("Audio");
-	MainWindow::taskList->append(test);
+
 }
 
 void MainWindow::Lookfor()
@@ -320,7 +318,7 @@ void MainWindow::Remove()
 	for (int i = op; i < ListNum && j != WigetList->end(); i++)
 	{
 		(*(j + i))->setObjectName(QString::number(op));
-		WigetList->at(i)->move(WigetList->at(i)->x() , 50 * i);
+		WigetList->at(i)->move(WigetList->at(i)->x(), 50 * i);
 		qDebug() << i;
 	}
 }

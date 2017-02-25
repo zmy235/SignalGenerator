@@ -72,7 +72,6 @@ void SetView::setOpacity(int value)
 	emit updateOpacity(value);
 }
 
-
 void SetView::setVH(bool value)
 {
 	//更新主窗体
