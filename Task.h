@@ -1,27 +1,20 @@
 #pragma once
 
-#ifndef TASK_H
-#define TASK_H
-
-#include<QString>
-#include<QList>
-#include<QDateTime>
-#include<QFileInfo>
-
+#include <string>
+#include <vector>
 class Task
 {
 public:
 	Task();
 	~Task(); 
 public:
-	QString type;
-	QString name;
-	QString filePath;
-	QDateTime time;
-	int size;
-	int progress;
-	bool state;
-	//QFileInfo info;//ÂëÂÊ¡¢·Ö±æÂÊ
+	std::string type;
+	std::string size;
+	std::string time;
+	std::string state;
+	std::string progress;
+	std::string filePath;
+	std::string info;
 };
 
-#endif
+extern std::vector<Task*> taskList;

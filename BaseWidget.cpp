@@ -1,9 +1,6 @@
 #include "SignalGenerator.h"
 #include "BaseWidget.h"
-#include "Task.h"
 #include <QDebug>
-
-float BaseWidget::v = 1;
 
 BaseWidget::BaseWidget(QWidget *parent) : QWidget(parent)
 {
@@ -15,7 +12,7 @@ BaseWidget::BaseWidget(QWidget *parent) : QWidget(parent)
 	setFixedSize(500, 400);
 
 	//设置无边框透明
-	setWindowOpacity(v);
+	setWindowOpacity(0.9);
 	setWindowFlags(Qt::FramelessWindowHint);
 
 	//设置QPalette对象的背景属性（颜色或图片）  
