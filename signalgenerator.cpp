@@ -1,24 +1,54 @@
 #include "SignalGenerator.h"
 #include "BaseWidget.h"
-#include "AddAudio.h"
-#include "AddVedio.h"
+#include "Task.h"
+#include "AddView.h"
+#include "HistoryView.h"
+#include "FindView.h"
+#include "SetView.h"
+#include "AboutView.h"
+#include "VedioPlayer.h"
 
-#include<QUrl>
-#include<QFileDialog>
-#include<QDesktopServices>
+#include<QDebug>
+#include<QList>
 #include<QMouseEvent>
 #include<QRect>
 #include<QPoint>
 #include<QLayout>
+#include<QDockWidget>
+#include<QVariant> 
 #include<QProgressBar>
 #include<QListView>
+#include<QPushButton>
+#include<QLabel>
+#include<QTimer>
+#include<QtAV/QtAV>
+#include<QtAVWidgets/QtAVWidgets>
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 {
 	setWindowTitle(tr("Main Window"));
-
 	ui.setupUi(this);
 
+	//初始化
+	ListNum = 0;
+	taskList = new QList<Task*>();
+	WigetList = new QList<QWidget*>();
+
+	//窗口对象
+	addView = new AddView();
+	historyView = new HistoryView();
+	findView = new FindView();
+	setView = new SetView();
+	aboutView = new AboutView();
+	player = new VedioPlayer();
+
+	//QTimer对象  
+	//QTimer* timer = new QTimer();
+	//timer->setInterval(2000);
+	//timer->start();
+	//connect(timer, SIGNAL(timeout()), this, SLOT(update()));
+
+	//初始化工具栏
 	createActions();
 	createToolBars();
 
@@ -27,30 +57,138 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 	m_bPressed = false;
 
 	//设置窗口大小
-	//setFixedSize(600, 500);
+	setFixedSize(720, 500);
+
+	//工具栏横竖
+	addToolBar(Qt::LeftToolBarArea, MainToolBar); //TopToolBarArea
+
+	//底页大小
+	Base = new QWidget(this);
+	Base->setFixedSize(670, 500);
+	Base->setGeometry(QRect(60, 0, 670, 500));
+
+	//字体
+	font = QFont("Cambria", 12, 28, false);
+	font.setBold(true);
+	font_pe.setColor(QPalette::WindowText, Qt::white);
 
 	//透明无边框
-	setWindowOpacity(0.8);
 	setWindowFlags(Qt::FramelessWindowHint);
 
 	//设置QPalette对象的背景属性（颜色或图片）  
-	QPalette palette;
 	palette.setBrush(QPalette::Background, QBrush(QPixmap("./Resources/background.png")));
 	setPalette(palette);
+
+	connect(setView, &SetView::updateVH, this, &MainWindow::updateVH);
+	connect(setView, &SetView::updateOpacity, this, &MainWindow::updateOpacity);
+	connect(addView, &AddView::updateList, this, &MainWindow::updateList);
+
 }
 
 MainWindow::~MainWindow()
 {
 }
 
+void MainWindow::updateList(Task* task)
+{
+	taskList->append(task);
+	TaskListHead = taskList->begin();
+	TaskListSize = taskList->size();
+
+	qDebug()
+	    << "============================================================="
+		<< task->type << endl
+		<< task->filePath << endl
+		<< task->name << endl
+		<< task->size << endl
+		<< task->progress << endl
+		<< task->state << endl
+		<< task->time << endl
+		<< TaskListSize << endl 
+		<< "=============================================================";
+
+	WigetList->push_back(new QWidget(Base));
+	WigetList->at(ListNum)->setFixedSize(650, 45);
+	WigetList->at(ListNum)->setGeometry(QRect(0, ListNum * 50, 650, 45));
+	WigetList->at(ListNum)->setWindowFlags(Qt::FramelessWindowHint);
+	WigetList->at(ListNum)->setPalette(palette);
+
+	taskName = new QLabel(WigetList->at(ListNum));
+	taskName->setText(task->name);
+	taskName->setFixedHeight(45);
+	taskName->setMaximumWidth(120);
+	taskName->setGeometry(QRect(0, 0, 120, 45));
+	taskName->setFont(font);
+	taskName->setPalette(font_pe);
+
+	progressBar = new QProgressBar(WigetList->at(ListNum));
+	progressBar->setObjectName(QString::fromUtf8("progressBar")+QString::number(ListNum));
+	progressBar->setFixedSize(300, 45);
+	progressBar->setGeometry(QRect(130, 0, 300, 45));
+	progressBar->setFont(font);
+	progressBar->setInputMethodHints(Qt::ImhNone);
+	progressBar->setValue(10*ListNum);//task->progress
+	progressBar->setAlignment(Qt::AlignCenter);
+	progressBar->setTextVisible(true);
+	progressBar->setInvertedAppearance(false);
+
+	start = new QPushButton(QIcon("./Resources/start.png"), tr(""), WigetList->at(ListNum));
+	start->setObjectName(QString::fromUtf8("start"));
+	start->setDisabled(true);
+	start->setFixedSize(QSize(45, 45));
+	start->setIconSize(QSize(45, 45));
+	start->setGeometry(QRect(450, 0, 45, 45));
+	connect(start, SIGNAL(clicked()), this, SLOT(Start()));
+
+	stop = new QPushButton(QIcon("./Resources/stop.png"), tr(""), WigetList->at(ListNum));
+	stop->setObjectName(QString::fromUtf8("stop"));
+	stop->setFixedSize(QSize(45, 45));
+	stop->setIconSize(QSize(45, 45));
+	stop->setGeometry(QRect(500, 0, 45, 45));
+	connect(stop, SIGNAL(clicked()), this, SLOT(Stop()));
+
+	remove = new QPushButton(QIcon("./Resources/remove.png"), tr(""), WigetList->at(ListNum));
+	remove->setObjectName(QString::number(ListNum));
+	remove->setFixedSize(QSize(45, 45));
+	remove->setIconSize(QSize(45, 45));
+	remove->setGeometry(QRect(550, 0, 45, 45));
+	connect(remove, SIGNAL(clicked()), this, SLOT(Remove()));
+
+	info = new QPushButton(QIcon("./Resources/info.png"), tr(""), WigetList->at(ListNum));
+	info->setObjectName(QString::number(ListNum));
+	info->setFixedSize(QSize(45, 45));
+	info->setIconSize(QSize(45, 45));
+	info->setGeometry(QRect(600, 0, 45, 45));
+	connect(info, SIGNAL(clicked()), this, SLOT(Info()));
+
+	//for (auto j = WigetList->begin(); j != WigetList->end(); j++)
+	//{
+	//	(*j)->findChild<QProgressBar*>("progressBar", Qt::FindDirectChildrenOnly)->setValue(10 * (j - (WigetList->begin())));
+	//}
+
+	WigetList->at(ListNum)->show();
+
+	ListNum++;
+
+}
+
+void MainWindow::updateVH(bool value)
+{
+	addToolBar(value ? Qt::TopToolBarArea : Qt::LeftToolBarArea, MainToolBar);
+	Base->setGeometry(QRect(value ? 0 : 60, value ? 60 : 0, 670, 500));
+}
+
+void MainWindow::updateOpacity(int value)
+{
+	this->setWindowOpacity((100.0 - value) / 100.0);
+	this->historyView->setWindowOpacity((100.0 - value) / 100.0);
+	this->addView->setWindowOpacity((100.0 - value) / 100.0);
+	this->aboutView->setWindowOpacity((100.0 - value) / 100.0);
+	this->findView->setWindowOpacity((100.0 - value) / 100.0);
+}
+
 void MainWindow::createActions()
 {
-
-	//MainToolBar
-
-	list = new QAction(QIcon("./Resources/list.png"), tr("&list"), this);
-	list->setStatusTip(tr("filelist"));
-	connect(list, SIGNAL(triggered()), this, SLOT(List()));
 
 	add = new QAction(QIcon("./Resources/add.png"), tr("&New"), this);
 	add->setStatusTip(tr("add a new file"));
@@ -62,114 +200,36 @@ void MainWindow::createActions()
 
 	lookfor = new QAction(QIcon("./Resources/lookfor.png"), tr("&lookfor"), this);
 	lookfor->setStatusTip(tr("lookfor a file"));
-	connect(lookfor, SIGNAL(triggered()), this, SLOT(Lookfor()));
+	connect(lookfor, SIGNAL(triggered()), this, SLOT(Find()));
 
 	setting = new QAction(QIcon("./Resources/setting.png"), tr("&setting"), this);
 	setting->setStatusTip(tr("setting"));
 	connect(setting, SIGNAL(triggered()), this, SLOT(Setting()));
 
-	shutdown = new QAction(QIcon("./Resources/shutdown.png"), tr("&shutdown"), this);
-	shutdown->setStatusTip(tr("exit"));
-	connect(shutdown, SIGNAL(triggered()), this, SLOT(close()));
-
 	about = new QAction(QIcon("./Resources/about.png"), tr("&about"), this);
 	about->setStatusTip(tr("about"));
 	connect(about, SIGNAL(triggered()), this, SLOT(About()));
 
-	//AddToolBar
-
-	back = new QAction(QIcon("./Resources/back.png"), tr("&Back"), this);
-	back->setStatusTip(tr("back"));
-	connect(back, SIGNAL(triggered()), this, SLOT(Back()));
-
-	audio = new QAction(QIcon("./Resources/audio.png"), tr("&New Audio"), this);
-	audio->setStatusTip(tr("add a new Audio file"));
-	connect(audio, SIGNAL(triggered()), this, SLOT(AddAudioWin()));
-
-	vedio = new QAction(QIcon("./Resources/vedio.png"), tr("&New Vedio"), this);
-	vedio->setStatusTip(tr("add a new Vedio file"));
-	connect(vedio, SIGNAL(triggered()), this, SLOT(AddVedioWin()));
-
-	remove = new QAction(QIcon("./Resources/remove.png"), tr("&remove"), this);
-	remove->setStatusTip(tr("remove a file"));
-	connect(remove, SIGNAL(triggered()), this, SLOT(test()));
-
-	stop = new QAction(QIcon("./Resources/stop.png"), tr("&stop"), this);
-	stop->setStatusTip(tr("stop"));
-	connect(stop, SIGNAL(triggered()), this, SLOT(test()));
-
-	start = new QAction(QIcon("./Resources/start.png"), tr("&start"), this);
-	start->setStatusTip(tr("start"));
-	connect(start, SIGNAL(triggered()), this, SLOT(test()));
+	shutdown = new QAction(QIcon("./Resources/shutdown.png"), tr("&shutdown"), this);
+	shutdown->setStatusTip(tr("exit"));
+	connect(shutdown, SIGNAL(triggered()), this, SLOT(close()));
 
 }
 
 void MainWindow::createToolBars()
 {
-	//MainToolBar
 	MainToolBar = addToolBar(tr("Tools"));
 	MainToolBar->setObjectName(QStringLiteral("MainToolBar"));
-	addToolBar(Qt::LeftToolBarArea, MainToolBar); //TopToolBarArea
-	insertToolBarBreak(AddToolBar);
 	MainToolBar->setMovable(false);
 	MainToolBar->setFloatable(false);
 	MainToolBar->setIconSize(QSize(45, 45));
-	MainToolBar->addAction(list);
 	MainToolBar->addAction(add);
 	MainToolBar->addAction(history);
 	MainToolBar->addAction(lookfor);
 	MainToolBar->addAction(setting);
-	MainToolBar->addAction(shutdown);
 	MainToolBar->addAction(about);
-
-	//AddToolBar
-	AddToolBar = addToolBar(tr("AddToolBar"));
-	AddToolBar->setVisible(false);
-	AddToolBar->setObjectName(QStringLiteral("AddToolBar"));
-	addToolBar(Qt::LeftToolBarArea, AddToolBar);
-	insertToolBarBreak(AddToolBar);
-	AddToolBar->setFloatable(false);
-	AddToolBar->setMovable(false);
-	AddToolBar->setIconSize(QSize(45, 45));
-	AddToolBar->addAction(back);
-	AddToolBar->addAction(audio);
-	AddToolBar->addAction(vedio);
-}
-
-void MainWindow::createList()
-{
-	centralwidget = new QWidget(this);
-	centralwidget->setObjectName(QStringLiteral("centralwidget"));
-
-	progressBar = new QProgressBar(centralwidget);
-	progressBar->setObjectName(QStringLiteral("progressBar"));
-	progressBar->setGeometry(QRect(45, 0, 240, 40));
-	QFont font;
-	font.setFamily(QStringLiteral("Cambria"));
-	font.setPointSize(12);
-	progressBar->setFont(font);
-	progressBar->setInputMethodHints(Qt::ImhNone);
-	progressBar->setValue(60);
-	progressBar->setAlignment(Qt::AlignCenter);
-	progressBar->setTextVisible(true);
-	progressBar->setInvertedAppearance(false);
-
-	listView = new QListView(centralwidget);
-	listView->setObjectName(QStringLiteral("listView"));
-	listView->setGeometry(QRect(0, 0, 660, 450));
-
-
-
-
-	tabWidget->setObjectName(QStringLiteral("tabWidget"));
-	tabWidget->setGeometry(QRect(0, 0, 660, 500));
-	tabWidget->setIconSize(QSize(45, 45));
-	tab = new QWidget();
-	tab->setObjectName(QStringLiteral("tab"));
-	tabWidget->addTab(tab, QString());
-	tab_2 = new QWidget();
-	tab_2->setObjectName(QStringLiteral("tab_2"));
-	tabWidget->addTab(tab_2, QString());
+	MainToolBar->addAction(shutdown);
+	//insertToolBarBreak(AddToolBar);
 }
 
 //Mouse Action----------------------------------------------------------
@@ -179,6 +239,7 @@ void MainWindow::mousePressEvent(QMouseEvent *e)
 {
 	if (e->button() == Qt::LeftButton)
 	{
+		qDebug() << e->pos();
 		m_ptPress = e->pos();
 		m_bPressed = m_areaMovable.contains(m_ptPress);
 	}
@@ -208,66 +269,99 @@ void MainWindow::setAreaMovable(const QRect rt)
 	}
 }
 
-//Main Slots----------------------------------------------------------
-
-void MainWindow::List()
-{
-	createList();
-}
+//Main----------------------------------------------------------
 
 void MainWindow::Add()
 {
-	AddToolBar->setVisible(true);
+	addView->show();
+	player->show();
 }
-
 
 void MainWindow::History()
 {
+	historyView->show();
 }
 
-void MainWindow::Lookfor()
+void MainWindow::Find()
 {
+	findView->show();
 }
 
 void MainWindow::Setting()
 {
-	//AddToolBar->setOrientation(Qt::Vertical);//Horizontal
+	setView->show();
 }
 
 void MainWindow::About()
 {
+	aboutView->show();
 }
 
-//Add Slots----------------------------------------------------------
-
-void MainWindow::Back()
-{
-	AddToolBar->setVisible(false);
-}
-
-void MainWindow::AddAudioWin()
-{
-	AddAudio *Add_audio = new AddAudio();
-	Add_audio->show();
-}
-
-void MainWindow::AddVedioWin()
-{
-	AddVedio *Add_audio = new AddVedio();
-	Add_audio->show();
-}
+//List----------------------------------------------------------
 
 void MainWindow::Remove()
 {
+	QPushButton *test = qobject_cast<QPushButton *>(sender());
+	QWidget *w = test->parentWidget();
 
+	//获取项的坐标
+	//int op = test->objectName().toInt();
+	int op = WigetList->indexOf(w);
+
+	//关闭点击的项的窗口
+	//WigetList->at(op)->close();
+	w->close();
+
+	//擦除组件
+	WigetList->erase(WigetList->begin() + op);
+
+	//擦除对应任务列表项
+	MainWindow::taskList->erase(taskList->begin() + op);
+
+	//已绘制组件数减1
+	ListNum--;
+
+	auto j = WigetList->begin();
+	//被删除一行下面的所有组件向上移动一行
+
+	for (int i = op; i < ListNum && j != WigetList->end(); i++)
+	{
+		(*(j + i))->setObjectName(QString::number(op));
+		WigetList->at(i)->move(WigetList->at(i)->x(), 50 * i);
+		qDebug() << i;
+	}
 }
 
 void MainWindow::Start()
 {
-
+	QPushButton *test = qobject_cast<QPushButton *>(sender());
+	test->setDisabled(true);
+	QWidget *w = test->parentWidget();
+	w->findChild<QPushButton*>("stop", Qt::FindDirectChildrenOnly)->setDisabled(false);
 }
 
 void MainWindow::Stop()
 {
+	QPushButton *test = qobject_cast<QPushButton *>(sender());
+	test->setDisabled(true);
+	QWidget *w = test->parentWidget();
+	w->findChild<QPushButton*>("start", Qt::FindDirectChildrenOnly)->setDisabled(false);
+}
 
+void MainWindow::Info()
+{
+	//获取控件指针
+	QPushButton *test = qobject_cast<QPushButton *>(sender());
+
+	//获取控件父窗口
+	QWidget *w = test->parentWidget();
+
+	//获取项的坐标
+	int op = WigetList->indexOf(w);
+
+	//对应任务列表项
+	QString str = MainWindow::taskList->at(op)->filePath;
+	QString str2 = MainWindow::taskList->at(op)->type;
+
+	qDebug() << str<<str2;
 }

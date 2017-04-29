@@ -17,6 +17,9 @@ public:
 	BaseWidget(QWidget *parent = 0);
 	void setAreaMovable(const QRect rt);//设置鼠标按下可移动窗口的区域，在子窗口中必须设置该区域
 
+public:
+	static float v;//全局
+
 protected:
 	void mousePressEvent(QMouseEvent *);
 	void mouseMoveEvent(QMouseEvent *);

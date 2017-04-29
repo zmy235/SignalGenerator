@@ -8,13 +8,22 @@
 class    Action;
 class    QToolBar;
 class    QWidget;
+class    BaseWidget;
 class    QRect;
 class    QPoint;
 class    QMouseEvent;
 class    QProgressBar;
-class    QListView; 
-class    QDoubleSpinBox;
-
+class    QListView;
+class    QPushButton;
+class    QLabel;
+class    QDateTime;
+class    Task;
+class    AddView;
+class    SetView;
+class    AboutView;
+class    HistoryView;
+class    FindView;
+class    VedioPlayer;
 
 class MainWindow : public QMainWindow
 {
@@ -23,7 +32,6 @@ class MainWindow : public QMainWindow
 public:
 	MainWindow(QWidget *parent = 0);
 	~MainWindow();
-	QListView *listView;
 
 private:
 	Ui::MainWindow ui;
@@ -31,19 +39,19 @@ private:
 private:
 	void createActions();
 	void createToolBars();
-	void createList();
 
-	QWidget *centralwidget;
-	QTabWidget *tabWidget;
-	QWidget *tab;
-	QWidget *tab_2;
-	QProgressBar *progressBar;
+	AddView *addView;
+	VedioPlayer* player;
+	SetView *setView;
+	AboutView *aboutView;
+	HistoryView *historyView;
+	FindView *findView;
+
+	QFont font;
+	QPalette font_pe;
+	QPalette palette; 
+
 	QToolBar *MainToolBar;
-	QToolBar *AddToolBar;
-	QDoubleSpinBox *doubleSpinBox;
-
-
-	QAction *list;//列表
 	QAction *add;//添加
 	QAction *history;//历史记录
 	QAction *lookfor;//查找
@@ -51,36 +59,43 @@ private:
 	QAction *about;//关于
 	QAction *shutdown;//关闭
 
-	QAction *back;//返回
-	QAction *audio;//音频
-	QAction *vedio;//视频
-	QAction *start;//开始
-	QAction *stop;//停止
-	QAction *remove;//移除
+	QList<Task*>* taskList;//全局
+	QList<Task*>::iterator TaskListHead;
+	int TaskListSize;
+	int ListNum;
+	QList<QWidget*>* WigetList;
+	QWidget *Base;
+	QLabel *taskName;
+	QProgressBar *progressBar;
+	QPushButton *start;
+	QPushButton *stop;
+	QPushButton *remove;
+	QPushButton *info;
 
 	QRect m_areaMovable;//可移动窗口的区域，鼠标只有在该区域按下才能移动窗口
-	bool m_bPressed;//鼠标按下标志（不分左右键）
 	QPoint m_ptPress;//鼠标按下的初始位置
-
+	bool m_bPressed;//鼠标按下标志（不分左右键）
 	void setAreaMovable(const QRect rt);
 	void mousePressEvent(QMouseEvent *);
 	void mouseMoveEvent(QMouseEvent *);
 	void mouseReleaseEvent(QMouseEvent *);
 
 	private slots:
-	void List();
+
+	void updateVH(bool);
+	void updateOpacity(int);
+	void updateList(Task*);
+
 	void Add();
 	void History();
-	void Lookfor();
 	void Setting();
 	void About();
+	void Find();
 
-	void Back();
-	void AddAudioWin();
-	void AddVedioWin();
 	void Start();
 	void Stop();
 	void Remove();
+	void Info();
 
 };
 
