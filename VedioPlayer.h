@@ -25,7 +25,6 @@
 
 using namespace QtAV;
 
-//class Slider;
 class VedioPlayer : public BaseWidget
 {
     Q_OBJECT
@@ -34,61 +33,74 @@ public:
 	explicit VedioPlayer(QWidget *parent = 0);
 	~VedioPlayer();
 
-public slots:
-    void play(const QString &name);
-    void openFile();
-    void togglePlayPause();
-
-private slots:
-    void setupUi();
-    void initPlayer();
-    void setVolume();
-    void setRepeateMax(int m);
-
-    void stopUnload();
-    void seek();
-    void onPaused(bool p);
-    void onStartPlay();
-    void onStopPlay();
-
-    void onSeekFinished();
-    void onTimeSliderHover(int pos, int value);
-    void onTimeSliderLeave();
-    void handleError(const QtAV::AVError& e);
-    void onPositionChange(qint64 pos);
-    void showHideVolumeBar();
-    void tryShowControlBar();
-    void toggleRepeat(bool r);
-    void repeatAChanged(const QTime& t);
-    void repeatBChanged(const QTime& t);
-
 private:
     int mRepeateMax;
     int mCursorTimer;
+	const qreal kVolumeInterval = 0.04;
+	const int kVolumeSliderMax = 100;
     bool mIsReady,mHasPendingPlay;
+
     VideoOutput *mpVo;
     AVPlayer *mpPlayer;
     AVClock *mpClock;
     VideoRenderer *mpRenderer, *mpTempRenderer;
 
-	const int kVolumeSliderMax = 100;
     QString mFile;
     QString mTitle;
     QTimeEdit *mpRepeatA, *mpRepeatB;
-    QVBoxLayout *mpPlayerLayout,*mainLayout;
+
+	QVBoxLayout *mainLayout;
+	QVBoxLayout *mpPlayerLayout;
+	QVBoxLayout *vb;
+	QHBoxLayout *hb; 
+	QHBoxLayout *controlLayout;
+
     QAction *mpRepeatEnableAction;
     QWidgetAction *mpRepeatAction;
     QWidget *mpControl;
     QLabel *mpCurrent, *mpEnd;
-    QLabel *mpTitle;
     QLabel *mpSpeed;
-    Slider *mpTimeSlider, *mpVolumeSlider;
+	Slider *mpTimeSlider; 
+	Slider *mpVolumeSlider;
     QSpinBox *mpRepeatBox;
+
     QToolButton *mpVolumeBtn;
     QToolButton *mpPlayPauseBtn;
-    QToolButton *mpStopBtn, *mpForwardBtn, *mpBackwardBtn;
+	QToolButton *mpStopBtn;
+	QToolButton *mpForwardBtn;
+	QToolButton *mpBackwardBtn;
     QToolButton *mpOpenBtn;
-    VideoPreviewWidget *m_preview;
+
+	QLabel *pRepeatLabel;
+
+	VideoPreviewWidget *m_preview;
+
+public slots:
+	void play(const QString &name);
+	void openFile();
+	void togglePlayPause();
+
+private slots:
+	void setupUi();
+	void initPlayer();
+	void setVolume();
+	void setRepeateMax(int m);
+	void stopUnload();
+	void seek();
+	void onPaused(bool p);
+	void onStartPlay();
+	void onStopPlay();
+	void onSeekFinished();
+	void onTimeSliderHover(int pos, int value);
+	void onTimeSliderLeave();
+	void handleError(const QtAV::AVError& e);
+	void onPositionChange(qint64 pos);
+	void showHideVolumeBar();
+	void tryShowControlBar();
+	void toggleRepeat(bool r);
+	void repeatAChanged(const QTime& t);
+	void repeatBChanged(const QTime& t);
+
 };
 
-#endif // MAINWINDOW_H
+#endif // VedioPlayer_H

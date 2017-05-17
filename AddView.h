@@ -55,7 +55,7 @@ signals:
 
 	void updateList(Task*);
 
-	private slots:
+private slots:
 
 	void addAudio();
 	void AudioFile();

@@ -6,7 +6,8 @@
 #include "FindView.h"
 #include "SetView.h"
 #include "AboutView.h"
-#include "VedioPlayer.h"
+#include "VideoWall.h"
+//#include "playerwindow.h"
 
 #include<QDebug>
 #include<QList>
@@ -21,8 +22,6 @@
 #include<QPushButton>
 #include<QLabel>
 #include<QTimer>
-#include<QtAV/QtAV>
-#include<QtAVWidgets/QtAVWidgets>
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 {
@@ -40,7 +39,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 	findView = new FindView();
 	setView = new SetView();
 	aboutView = new AboutView();
-	player = new VedioPlayer();
+	wall = new VideoWall();
 
 	//QTimer¶ÔÏó  
 	//QTimer* timer = new QTimer();
@@ -274,7 +273,10 @@ void MainWindow::setAreaMovable(const QRect rt)
 void MainWindow::Add()
 {
 	addView->show();
-	player->show();
+	wall->setVideoRendererTypeString("Video Out");
+	wall->setRows(3);
+	wall->setCols(3);
+	wall->show();
 }
 
 void MainWindow::History()

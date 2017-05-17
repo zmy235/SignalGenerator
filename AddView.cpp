@@ -17,7 +17,7 @@
 #include<QUrl>
 #include<QFileDialog>
 #include<QMessageBox>
-#include <QDebug>
+#include<QDebug>
 
 AddView::AddView(QWidget *parent) : BaseWidget(parent)
 {

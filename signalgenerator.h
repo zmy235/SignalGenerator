@@ -22,8 +22,9 @@ class    AddView;
 class    SetView;
 class    AboutView;
 class    HistoryView;
-class    FindView;
-class    VedioPlayer;
+class    FindView; 
+class    VideoWall;
+//PlayerWindow
 
 class MainWindow : public QMainWindow
 {
@@ -41,11 +42,12 @@ private:
 	void createToolBars();
 
 	AddView *addView;
-	VedioPlayer* player;
 	SetView *setView;
 	AboutView *aboutView;
 	HistoryView *historyView;
 	FindView *findView;
+	VideoWall *wall;
+	//PlayerWindow* player;
 
 	QFont font;
 	QPalette font_pe;
