@@ -20,7 +20,8 @@ public:
 	QDateTime time;
 	int size;
 	int progress;
-	bool state;
+	bool playing;
+	bool finished;
 	//QFileInfo info;//ÂëÂÊ¡¢·Ö±æÂÊ
 };
 

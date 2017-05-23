@@ -55,7 +55,7 @@ AddView::AddView(QWidget *parent) : BaseWidget(parent)
 	AudioButton->setGeometry(QRect(150, 100, 45, 45));
 	connect(AudioButton, SIGNAL(clicked()), this, SLOT(addAudio()));
 
-	VedioButton = new QPushButton(QIcon("./Resources/vedio.png"), tr(""), BaseView);
+	VedioButton = new QPushButton(QIcon("./Resources/video.png"), tr(""), BaseView);
 	VedioButton->setStatusTip(tr("Ìí¼ÓÊÓÆµ"));
 	VedioButton->setFixedSize(QSize(45, 45));
 	VedioButton->setIconSize(QSize(45, 45));
@@ -210,7 +210,7 @@ void AddView::AudioOK()
 	task->time = QDateTime::currentDateTime();
 	QString str = task->time.toString("yyyy-MM-dd hh:mm:ss ddd");
 	task->progress = 0;
-	task->state = false;
+	task->playing = true;
 	task->type = tr("Audio");
 
 	emit updateList(task);
@@ -222,7 +222,7 @@ void AddView::VedioOK()
 {
 	task->time = QDateTime::currentDateTime();
 	task->progress = 0;
-	task->state = false;
+	task->playing = true;
 	task->type = tr("Vedio");
 
 	emit updateList(task);

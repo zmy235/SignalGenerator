@@ -22,10 +22,13 @@ class    AddView;
 class    SetView;
 class    AboutView;
 class    HistoryView;
-class    FindView; 
+class    FindView;
 class    VideoWall;
-//PlayerWindow
+class    QVBoxLayout;
+class    QScrollArea;
+class    QScrollBar;
 
+//PlayerWindow
 class MainWindow : public QMainWindow
 {
 	Q_OBJECT
@@ -33,6 +36,7 @@ class MainWindow : public QMainWindow
 public:
 	MainWindow(QWidget *parent = 0);
 	~MainWindow();
+	void close();
 
 private:
 	Ui::MainWindow ui;
@@ -41,20 +45,19 @@ private:
 	void createActions();
 	void createToolBars();
 
-	AddView *addView;
 	SetView *setView;
 	AboutView *aboutView;
 	HistoryView *historyView;
 	FindView *findView;
 	VideoWall *wall;
-	//PlayerWindow* player;
 
 	QFont font;
 	QPalette font_pe;
 	QPalette palette; 
 
 	QToolBar *MainToolBar;
-	QAction *add;//添加
+	QAction *audio;//音频
+	QAction *video;//视频
 	QAction *history;//历史记录
 	QAction *lookfor;//查找
 	QAction *setting;//设置
@@ -63,10 +66,14 @@ private:
 
 	QList<Task*>* taskList;//全局
 	QList<Task*>::iterator TaskListHead;
+	QList<QWidget*>* WigetList; 
+	QVBoxLayout *vLayout;
+	QScrollArea *scrollArea;
+
 	int TaskListSize;
 	int ListNum;
-	QList<QWidget*>* WigetList;
-	QWidget *Base;
+
+	BaseWidget *Base,*audioView,*videoView;
 	QLabel *taskName;
 	QProgressBar *progressBar;
 	QPushButton *start;
@@ -88,14 +95,14 @@ private:
 	void updateOpacity(int);
 	void updateList(Task*);
 
-	void Add();
+	void AudioView();
+	void VideoView();
 	void History();
 	void Setting();
 	void About();
 	void Find();
 
-	void Start();
-	void Stop();
+	void Start_Stop();
 	void Remove();
 	void Info();
 

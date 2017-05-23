@@ -12,16 +12,20 @@ BaseWidget::BaseWidget(QWidget *parent) : QWidget(parent)
 	m_bPressed = false;
 
 	//设置窗口大小
-	setFixedSize(500, 400);
+	setMinimumSize(640, 480);
+	//setMaximumSize(1280, 960);
 
 	//设置无边框透明
 	setWindowOpacity(v);
-	setWindowFlags(Qt::FramelessWindowHint);
+	//setWindowFlags(Qt::FramelessWindowHint);
+	//setWindowFlags(Qt::CustomizeWindowHint);
 
 	//设置QPalette对象的背景属性（颜色或图片）  
 	QPalette palette;
-	palette.setBrush(QPalette::Background, QBrush(QPixmap("./Resources/background.png")));
+	palette.setBrush(QPalette::Background, QBrush(QPixmap("./Resources/bg0.png")));
 	setPalette(palette);
+
+	setAttribute(Qt::WA_QuitOnClose, false);
 }
 
 void BaseWidget::mousePressEvent(QMouseEvent *e)

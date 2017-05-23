@@ -5,6 +5,7 @@
 #include <QtAV/AVPlayer.h>
 #include <QtAVWidgets/WidgetRenderer.h>
 #include "BaseWidget.h"
+#include "Task.h"
 
 QT_BEGIN_NAMESPACE
 class QMenu;
@@ -21,32 +22,38 @@ public:
     void setCols(int n);
     int rows() const;
 	int cols() const;
-	void show();
 	void setView(BaseWidget *base);
-    void play(const QString& file);
+	void show();
+    void play();
+	QList<QtAV::AVPlayer*> players;
+	QMap<QtAV::AVPlayer*,QString> files;
 
 private:
     int r, c;
-    int timer_id;
-    QtAV::AVClock *clock;
-    QList<QtAV::AVPlayer*> players;
-	BaseWidget *view;
+	int nth;
+	BaseWidget *view; 
+	BaseWidget *AddView;
     QMenu *menu;
     QString vid;
+	Task tasks[9];
+	QVector<QString> vedioTypes;
 
 protected:
     virtual bool eventFilter(QObject *, QEvent *);
-    virtual void timerEvent(QTimerEvent *e);
+
+signals:
+	void updateList(Task*);
 
 public slots:
-    void stop();
-    void openLocalFile();
+	void stop();
+	void close();
     void openUrl();
-    void about();
-    void help();
+	void help();
+	void addVideoView();
+	void on_sel_vedio(const int &text);
+	void openLocalFile();
+	void VedioOK();
 
-private Q_SLOTS:
-    void changeClockType();
 };
 
 #endif // QTAV_VIDEOWALL_H
