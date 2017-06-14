@@ -5,6 +5,7 @@
 #include "FindView.h"
 #include "SetView.h"
 #include "AboutView.h"
+#include "AudioWall.h"
 #include "VideoWall.h"
 
 #include<QDebug>
@@ -23,44 +24,41 @@
 #include<QLabel>
 #include<QTimer>
 
+
+const int kVolumeSliderMax = 100;
+
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 {
-	setWindowTitle(tr("Main Window"));
+	setWindowTitle(tr("信号发生器"));
 	ui.setupUi(this);
-
 	//----------------------------------------------------------
 
 	//全局变量初始化
 	ListNum = 0;
 	taskList = new QList<Task*>();
-	WigetList = new QList<QWidget*>();
+	rows = new QList<QWidget*>();
 
-	//窗口对象初始化
+	//布局初始化
 
-	vLayout = new QVBoxLayout();
+	Base = ui.widget;
+
+	vLayout = ui.verticalLayout;
 	vLayout->setAlignment(Qt::AlignTop);
-	//vLayout->setSizeConstraint();
 
-	Base = new BaseWidget(this);
-	Base->setGeometry(QRect(60, 0, this->width()-60, this->height()));
-	//Base->setMinimumSize(640, 480);
-	Base->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-
-	scrollArea = new QScrollArea(this);
-	//scrollArea->setMinimumSize(640, 480);
-	scrollArea->setGeometry(QRect(60, 0, this->width() - 60, this->height()));
+	scrollArea = ui.scrollArea;
+	scrollArea->setWidgetResizable(true);
 	scrollArea->setWidget(Base);
 	scrollArea->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 	scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 	scrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
+	//窗口初始化
 	historyView = new HistoryView();
 	findView = new FindView();
 	setView = new SetView();
 	aboutView = new AboutView();
-	audioView = new BaseWidget();
+	audioView = new AudioWall();
 	videoView = new BaseWidget();
-
 	wall = new VideoWall();
 	wall->setRows(3);
 	wall->setCols(3);
@@ -85,19 +83,16 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 	font.setBold(true);
 	font_pe.setColor(QPalette::WindowText, Qt::white);
 
-	//透明无边框
-	//setWindowFlags(Qt::FramelessWindowHint);
-	//setWindowFlags(Qt::CustomizeWindowHint);
-
 	//设置QPalette对象的背景属性（颜色或图片）  
 	palette.setBrush(QPalette::Background, QBrush(QPixmap("./Resources/bg0.png")));
 	setPalette(palette);
-
+	//setStyleSheet("QMainWindow { background-color: #AACBEB; }");
 	//----------------------------------------------------------
 
 	connect(setView, &SetView::updateVH, this, &MainWindow::updateVH);
 	connect(setView, &SetView::updateOpacity, this, &MainWindow::updateOpacity);
 	connect(wall, &VideoWall::updateList, this, &MainWindow::updateList);
+	connect(audioView, &AudioWall::updateList, this, &MainWindow::updateList);
 
 }
 
@@ -107,9 +102,9 @@ MainWindow::~MainWindow()
 	findView->close();
 	setView->close();
 	aboutView->close();
-	//delete audioView;
+	delete audioView;
 	wall->stop();
-	wall->close(); 
+	delete wall;
 }
 
 void MainWindow::createActions()
@@ -146,8 +141,8 @@ void MainWindow::createActions()
 
 void MainWindow::createToolBars()
 {
-	MainToolBar = addToolBar(tr("Tools"));
-	MainToolBar->setObjectName(QStringLiteral("MainToolBar"));
+
+	MainToolBar = ui.toolBar;
 	MainToolBar->setMovable(false);
 	MainToolBar->setFloatable(false);
 	MainToolBar->setIconSize(QSize(45, 45));
@@ -216,68 +211,64 @@ void MainWindow::updateList(Task* task)
 		<< task->playing << endl
 		<< task->finished << endl
 		<< task->time << endl
-		<< TaskListSize << "  ListNum："<<ListNum<<endl
+		<< TaskListSize << "  ListNum：" << ListNum << endl
 		<< "=============================================================";
 
-	QHBoxLayout *hLayout = new QHBoxLayout();
-	hLayout->setSpacing(5);
-	vLayout->addLayout(hLayout);
 
 	QWidget *row = new QWidget(Base);
-	row->setFixedHeight(45);
+	row->setFixedHeight(50);
 	row->setWindowFlags(Qt::FramelessWindowHint);
 	row->setPalette(palette);
-	WigetList->push_back(row);
+	vLayout->addWidget(row);
+	rows->append(row);
 
-	taskName = new QLabel(row);
+	QHBoxLayout *hLayout = new QHBoxLayout(row);
+	hLayout->setSpacing(5);
+
+	QLabel *taskType = new QLabel(row);
+	taskType->setText(task->type + "  ");
+	taskType->setFixedHeight(45);
+	taskType->setFont(font);
+	taskType->setPalette(font_pe);
+	hLayout->addWidget(taskType, 20);
+
+	QLabel *taskName = new QLabel(row);
 	taskName->setText(task->name);
 	taskName->setFixedHeight(45);
 	taskName->setFont(font);
 	taskName->setPalette(font_pe);
-	hLayout->addWidget(taskName,26);
+	hLayout->addWidget(taskName, 30);
 
-	progressBar = new QProgressBar(row);
-	progressBar->setObjectName(QString::fromUtf8("progressBar") + QString::number(ListNum));
-	progressBar->setFixedHeight(45);
-	progressBar->setFont(font);
-	progressBar->setInputMethodHints(Qt::ImhNone);
-	progressBar->setValue(10 * ListNum);//task->progress
-	progressBar->setAlignment(Qt::AlignCenter);
-	progressBar->setTextVisible(true);
-	progressBar->setInvertedAppearance(false);
-	hLayout->addWidget(progressBar, 26);
+	//progressBar = new Slider(row);
+	//progressBar->setObjectName(QString::fromUtf8("progressBar") + QString::number(ListNum));
+	//progressBar->setFixedHeight(25);
+	//progressBar->setFont(font);
+	//progressBar->setInputMethodHints(Qt::ImhNone);
+	//progressBar->setValue(10 * ListNum);//task->progress
+	//progressBar->setOrientation(Qt::Horizontal);
+	////progressBar->setTextVisible(true);
+	//progressBar->setInvertedAppearance(false);
+	//hLayout->addWidget(progressBar, 26);
 
-	start = new QPushButton(QIcon("./Resources/start.png"), tr(""), row);
+	QPushButton *start = new QPushButton(QIcon("./Resources/start.png"), tr(""), row);
 	start->setObjectName(QString::fromUtf8("start"));
 	start->setFixedSize(QSize(45, 45));
 	start->setIconSize(QSize(45, 45));
-	start->setGeometry(QRect(450, 0, 45, 45));
-	hLayout->addWidget(start, 10);
-
-	stop = new QPushButton(QIcon("./Resources/stop.png"), tr(""), row);
-	stop->setObjectName(QString::fromUtf8("stop"));
-	stop->setFixedSize(QSize(45, 45));
-	stop->setIconSize(QSize(45, 45));
-	stop->setGeometry(QRect(500, 0, 45, 45));
-	hLayout->addWidget(stop, 10);
-
-	remove = new QPushButton(QIcon("./Resources/remove.png"), tr(""), row);
+	hLayout->addWidget(start, 15);
+	
+	QPushButton *remove = new QPushButton(QIcon("./Resources/remove.png"), tr(""), row);
 	remove->setObjectName(QString::number(ListNum));
 	remove->setFixedSize(QSize(45, 45));
 	remove->setIconSize(QSize(45, 45));
-	remove->setGeometry(QRect(550, 0, 45, 45));
-	hLayout->addWidget(remove, 10);
+	hLayout->addWidget(remove, 15);
 
-	info = new QPushButton(QIcon("./Resources/info.png"), tr(""), row);
+	QPushButton *info = new QPushButton(QIcon("./Resources/info.png"), tr(""), row);
 	info->setObjectName(QString::number(ListNum));
 	info->setFixedSize(QSize(45, 45));
 	info->setIconSize(QSize(45, 45));
-	info->setGeometry(QRect(600, 0, 45, 45));
-	hLayout->addWidget(info, 10);
+	hLayout->addWidget(info, 15);
 
-
-	connect(start, SIGNAL(clicked()), this, SLOT(Start()));
-	connect(stop, SIGNAL(clicked()), this, SLOT(Stop()));
+	connect(start, SIGNAL(clicked()), this, SLOT(Start_Stop()));
 	connect(remove, SIGNAL(clicked()), this, SLOT(Remove()));
 	connect(info, SIGNAL(clicked()), this, SLOT(Info()));
 
@@ -304,13 +295,17 @@ void MainWindow::updateOpacity(int value)
 	this->historyView->setWindowOpacity((100.0 - value) / 100.0);
 	this->aboutView->setWindowOpacity((100.0 - value) / 100.0);
 	this->findView->setWindowOpacity((100.0 - value) / 100.0);
+
+	//透明无边框
+	//setWindowFlags(Qt::FramelessWindowHint);
+	//setWindowFlags(Qt::CustomizeWindowHint);
 }
 
 //Menu
 
 void MainWindow::AudioView()
 {
-	;
+	audioView->show();
 }
 
 void MainWindow::VideoView()
@@ -344,70 +339,32 @@ void MainWindow::Remove()
 {
 	QPushButton *test = qobject_cast<QPushButton *>(sender());
 	QWidget *w = test->parentWidget();
-
-	//获取项的坐标
-	//int op = test->objectName().toInt();
-	int op = WigetList->indexOf(w);
-
-	//关闭点击的项的窗口
-	//WigetList->at(op)->close();
+	nth = w->y() / 50;
 	w->close();
-
-	//擦除组件
-	WigetList->erase(WigetList->begin() + op);
-
-	//擦除对应任务列表项
-	MainWindow::taskList->erase(taskList->begin() + op);
-
-	//已绘制组件数减1
-	ListNum--;
-
-	auto j = WigetList->begin();
-	//被删除一行下面的所有组件向上移动一行
-
-	for (int i = op; i < ListNum && j != WigetList->end(); i++)
-	{
-		(*(j + i))->setObjectName(QString::number(op));
-		WigetList->at(i)->move(WigetList->at(i)->x(), 50 * i);
-		qDebug() << i;
-	}
 }
 
 void MainWindow::Start_Stop()
 {
 	QPushButton *test = qobject_cast<QPushButton *>(sender());
 	QWidget *w = test->parentWidget();
-	int i = 0;
-	while (WigetList->at(i) != w ) i++;
-	auto player = wall->players.at(i);
-	if (player->isPlaying())
+	nth = w->y()/50;
+	if (taskList->at(nth)->playing)
 	{
-		taskList->at(i)->playing = false;
-		player->pause(!player->isPaused());
+		taskList->at(nth)->pause();
 		test->setIcon(QIcon("./Resources/stop.png"));
 	}
 	else
 	{
-		taskList->at(i)->playing = true;
-		player->play();
+		taskList->at(nth)->start();
 		test->setIcon(QIcon("./Resources/start.png"));
 	}
 }
 
 void MainWindow::Info()
 {
-	//获取控件指针
 	QPushButton *test = qobject_cast<QPushButton *>(sender());
-
-	//获取控件父窗口
 	QWidget *w = test->parentWidget();
-
-	//获取项的坐标
-	int op = WigetList->indexOf(w);
-
-	//对应任务列表项
-	QString str = MainWindow::taskList->at(op)->filePath;
-	QString str2 = MainWindow::taskList->at(op)->type;
-
-	qDebug() << str << str2;
+	nth = w->y() / 50;
+	qDebug() << taskList->at(nth)->filePath <<endl
+		<< taskList->at(nth)->type;
 }

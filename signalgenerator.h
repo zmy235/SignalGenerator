@@ -23,10 +23,11 @@ class    SetView;
 class    AboutView;
 class    HistoryView;
 class    FindView;
-class    VideoWall;
+class    AudioWall;
+class    VideoWall; 
 class    QVBoxLayout;
 class    QScrollArea;
-class    QScrollBar;
+class    QScrollBar; 
 
 //PlayerWindow
 class MainWindow : public QMainWindow
@@ -38,6 +39,14 @@ public:
 	~MainWindow();
 	void close();
 
+	SetView *setView;
+	AboutView *aboutView;
+	HistoryView *historyView;
+	FindView *findView;
+	AudioWall *audioView;
+	BaseWidget *videoView;
+	VideoWall *wall;
+
 private:
 	Ui::MainWindow ui;
 
@@ -45,15 +54,13 @@ private:
 	void createActions();
 	void createToolBars();
 
-	SetView *setView;
-	AboutView *aboutView;
-	HistoryView *historyView;
-	FindView *findView;
-	VideoWall *wall;
-
 	QFont font;
 	QPalette font_pe;
 	QPalette palette; 
+
+	QWidget *Base;
+	QScrollArea *scrollArea;
+	QVBoxLayout *vLayout; 
 
 	QToolBar *MainToolBar;
 	QAction *audio;//音频
@@ -66,20 +73,12 @@ private:
 
 	QList<Task*>* taskList;//全局
 	QList<Task*>::iterator TaskListHead;
-	QList<QWidget*>* WigetList; 
-	QVBoxLayout *vLayout;
-	QScrollArea *scrollArea;
+	QList<QWidget*>* rows;
 
 	int TaskListSize;
 	int ListNum;
+	int nth;
 
-	BaseWidget *Base,*audioView,*videoView;
-	QLabel *taskName;
-	QProgressBar *progressBar;
-	QPushButton *start;
-	QPushButton *stop;
-	QPushButton *remove;
-	QPushButton *info;
 
 	QRect m_areaMovable;//可移动窗口的区域，鼠标只有在该区域按下才能移动窗口
 	QPoint m_ptPress;//鼠标按下的初始位置

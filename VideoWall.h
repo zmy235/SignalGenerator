@@ -17,7 +17,6 @@ class VideoWall : public QObject
 public:
     explicit VideoWall(QObject *parent = 0);
     ~VideoWall();
-    void setVideoRendererTypeString(const QString& vt);
     void setRows(int n);
     void setCols(int n);
     int rows() const;
@@ -25,6 +24,7 @@ public:
 	void setView(BaseWidget *base);
 	void show();
     void play();
+	bool isPlaying;
 	QList<QtAV::AVPlayer*> players;
 	QMap<QtAV::AVPlayer*,QString> files;
 
@@ -50,7 +50,7 @@ public slots:
     void openUrl();
 	void help();
 	void addVideoView();
-	void on_sel_vedio(const int &text);
+	void selectVideoType(const int &text);
 	void openLocalFile();
 	void VedioOK();
 
