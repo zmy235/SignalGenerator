@@ -1,13 +1,16 @@
-#ifndef QTAV_AudioWALL_H
-#define QTAV_AudioWALL_H
+#ifndef AudioWALL_H
+#define AudioWALL_H
 
 #include <QtCore/QList>
+#include <QFile>
 #include <QAudioFormat>
 #include <QAudioOutput>
-#include "WAVFile.h"
+#include <QComboBox>
+
 #include "BaseWidget.h"
-#include "Task.h"
 #include "Slider.h"
+#include "AudioTask.h"
+//#include "WAVFile.h"
 
 QT_BEGIN_NAMESPACE
 class QMenu;
@@ -23,28 +26,42 @@ public:
 	explicit AudioWall(QWidget *parent = 0);
 	~AudioWall();
 	void eventFilter(QMouseEvent *);
+	void createAudioOutput();
 
 public:
-	Task tasks[10];
-	QList<QPushButton*> addButtons;
-	QList<QAudioOutput*> players;
-	QList<Slider*> mpTimeSliders;
-	QList<Slider*> mpVolumeSliders;
-	int SampleRates[10];
-
 	int nth;
+	QList<QPushButton*> addButtons;
+	QVBoxLayout *vLayout;
+	BaseWidget *AddView;
+	QList<AudioTask*> tasks;
+	QString taskName;
+	QString file_path;
+	QFileInfo taskInfo;
+
+	QComboBox *sampleRateComboBox;
+	QString sampleRate;
+
+	QComboBox *m_deviceBox;
+	QAudioDeviceInfo m_device;
+	QIODevice *m_output;
+	QAudioOutput *m_audioOutput;
+	QAudioFormat m_format;
+
+	Slider* TimeSlider;
+	Slider* VolumeSlider;
+
 	QFont font;
 	QPalette pe;
 	QPalette font_pe;
-	QVBoxLayout *vLayout;
-	BaseWidget *AddView;
 
 signals:
-	void updateList(Task*);
+	void updateAudioList(AudioTask*);
+	void updateAudioState(int);
 
 public slots:
 	void addAudioView();
-	void selectAudioType(const int &text);
+	void setSampleRate(const int &index);
+	void deviceChanged(const int &index);
 	void openLocalFile();
 	void AudioOK();
 
@@ -53,9 +70,8 @@ public slots:
 	void onTimeSliderLeave();
 	void setVolume();
 
-	void Start();
-	void Stop();
+	void SetState();
 	void Remove();
 };
 
-#endif // QTAV_AudioWALL_H
+#endif

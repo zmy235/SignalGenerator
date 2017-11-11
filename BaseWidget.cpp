@@ -1,6 +1,7 @@
 #include "SignalGenerator.h"
 #include "BaseWidget.h"
 #include "Task.h"
+
 #include <QDebug>
 
 float BaseWidget::v = 1;
@@ -13,7 +14,6 @@ BaseWidget::BaseWidget(QWidget *parent) : QWidget(parent)
 
 	//设置窗口大小
 	setMinimumSize(640, 480);
-	//setMaximumSize(1280, 960);
 
 	//设置无边框透明
 	setWindowOpacity(v);
@@ -22,7 +22,7 @@ BaseWidget::BaseWidget(QWidget *parent) : QWidget(parent)
 
 	//设置QPalette对象的背景属性（颜色或图片）  
 	QPalette palette;
-	palette.setBrush(QPalette::Background, QBrush(QPixmap("./Resources/bg0.png")));
+	palette.setBrush(QPalette::Background, QBrush(QPixmap("./Resources/background.png")));
 	setPalette(palette);
 
 	setAttribute(Qt::WA_QuitOnClose, false);

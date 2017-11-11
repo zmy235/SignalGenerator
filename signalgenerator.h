@@ -3,8 +3,10 @@
 
 #include <QtWidgets/QMainWindow>
 #include "ui_MainWindow.h"
+#include "Task.h"
+#include "AudioTask.h"
+#include "VideoTask.h"
 
-//所用到的类的前置声明
 class    Action;
 class    QToolBar;
 class    QWidget;
@@ -17,19 +19,17 @@ class    QListView;
 class    QPushButton;
 class    QLabel;
 class    QDateTime;
-class    Task;
+class    TaskRow;
 class    AddView;
 class    SetView;
 class    AboutView;
 class    HistoryView;
-class    FindView;
 class    AudioWall;
-class    VideoWall; 
+class    VideoWall;
 class    QVBoxLayout;
 class    QScrollArea;
-class    QScrollBar; 
+class    QScrollBar;
 
-//PlayerWindow
 class MainWindow : public QMainWindow
 {
 	Q_OBJECT
@@ -37,74 +37,72 @@ class MainWindow : public QMainWindow
 public:
 	MainWindow(QWidget *parent = 0);
 	~MainWindow();
-	void close();
 
+private:
+	Ui::MainWindow ui;
 	SetView *setView;
 	AboutView *aboutView;
 	HistoryView *historyView;
-	FindView *findView;
 	AudioWall *audioView;
 	BaseWidget *videoView;
 	VideoWall *wall;
 
 private:
-	Ui::MainWindow ui;
-
-private:
-	void createActions();
-	void createToolBars();
 
 	QFont font;
 	QPalette font_pe;
-	QPalette palette; 
+	QPalette palette;
 
 	QWidget *Base;
 	QScrollArea *scrollArea;
-	QVBoxLayout *vLayout; 
+	QVBoxLayout *vLayout;
 
 	QToolBar *MainToolBar;
 	QAction *audio;//音频
 	QAction *video;//视频
 	QAction *history;//历史记录
-	QAction *lookfor;//查找
 	QAction *setting;//设置
 	QAction *about;//关于
 	QAction *shutdown;//关闭
 
-	QList<Task*>* taskList;//全局
-	QList<Task*>::iterator TaskListHead;
-	QList<QWidget*>* rows;
+	QVector<Task*> taskList;//全局音频任务列表
+	QList<AudioTask*> AudioTaskList;//全局音频任务列表
+	QList<VideoTask*> VideoTaskList;//全局音频任务列表
+	QList<TaskRow*> rows;//行控件
 
-	int TaskListSize;
 	int ListNum;
-	int nth;
-
+	int nth;//当前操作位置
+	int audioNth[10];//音频任务对应位置
+	int videoNth[9];//视频任务对应位置
 
 	QRect m_areaMovable;//可移动窗口的区域，鼠标只有在该区域按下才能移动窗口
 	QPoint m_ptPress;//鼠标按下的初始位置
-	bool m_bPressed;//鼠标按下标志（不分左右键）
-	void setAreaMovable(const QRect rt);
+	bool m_bPressed;//鼠标按下标志(不分左右键)
+
+	void createActions();
+	void createToolBars();//拖动控制
 	void mousePressEvent(QMouseEvent *);
 	void mouseMoveEvent(QMouseEvent *);
 	void mouseReleaseEvent(QMouseEvent *);
+	void setAreaMovable(const QRect rt); 
+	void deleteRow(Task*);
 
 	private slots:
 
+	void updateAudioList(AudioTask*);
+	void updateVideoList(VideoTask*);
+	void updateAudioState(int);
+	void updateVideoState(int);
 	void updateVH(bool);
 	void updateOpacity(int);
-	void updateList(Task*);
+	void updateFramless(bool);
 
 	void AudioView();
 	void VideoView();
 	void History();
 	void Setting();
 	void About();
-	void Find();
-
-	void Start_Stop();
-	void Remove();
 	void Info();
-
 };
 
 #endif // MainWindow_H

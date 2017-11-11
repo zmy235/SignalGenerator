@@ -1,11 +1,9 @@
-
 #ifndef WAVFILE_H
 #define WAVFILE_H
 
 #include "sndfile.h"
 #include <QIODevice>
 #include <QAudioFormat>
-
 
 class WAVFile : public QIODevice
 {

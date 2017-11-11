@@ -7,27 +7,27 @@
 #include<QList>
 #include<QDateTime>
 #include<QFileInfo>
-#include <QAudioOutput>
-#include <QtAV/AVPlayer.h>
 
 class Task
 {
 public:
-	Task();
-	~Task();
-	void start();
-	void pause();
-	QtAV::AVPlayer* video;
-	QAudioOutput* audio;
-	QString type;
-	QString name;
-	QString filePath;
-	QDateTime time;
-	QString info;
-	int size;
-	int progress;
-	bool playing;
-	bool finished;
+	Task(QString a, QString b, QFileInfo c) :
+		taskType(a),
+		taskName(b),
+		taskInfo(c){}
+	~Task(){}
+	virtual void start() = 0;
+	virtual void pause() = 0;
+	virtual void cancel() = 0;
+
+public:
+	QString taskType;
+	QString taskName;
+	QFileInfo taskInfo;
+	QDateTime taskTime;
+	int taskProgress;
+	bool isPlaying;
+	bool isFinished;
 };
 
 #endif

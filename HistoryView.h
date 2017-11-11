@@ -1,6 +1,3 @@
-//#pragma once
-
-//Í·ÎÄ¼þ£ºHistoryView.h
 #ifndef HistoryView_H
 #define HistoryView_H
 

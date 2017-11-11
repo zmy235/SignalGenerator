@@ -1,14 +1,14 @@
-#include "AudioWall.h"
 #include "BaseWidget.h"
-#include "Task.h"
+#include "AudioWall.h"
+#include "AudioTask.h"
 
 #include <QFile>  
 #include <QAudioFormat>  
-#include <QAudioOutput>
+#include <QAudioOutput> 
+#include <QAudioDeviceInfo>
+#include <QSoundEffect>
 #include <QComboBox>
-#include <QDesktopWidget>
 #include <QDebug>
-#include <QEvent>
 #include <QFileDialog>
 #include <QFont>
 #include <QLabel>
@@ -20,9 +20,6 @@
 #include <QMessageBox>
 #include <QPalette>
 #include <QPushButton>
-#include <QPoint>
-#include <QRect>
-#include <QTextEdit>
 #include <QtCore/QUrl>
 #include <QUrl>
 #include <QWidget>
@@ -32,12 +29,11 @@ const qreal kVolumeInterval = 0.04;
 AudioWall::AudioWall(QWidget *parent) : BaseWidget(parent)
 {
 	setWindowTitle(tr("Audio Wall"));
-
+	setFixedSize(650,500);
 	font = QFont("Cambria", 12, 28, false);
 	font.setBold(true);
 	font_pe.setColor(QPalette::WindowText, Qt::white);
 	pe.setColor(QPalette::ButtonText, Qt::white);
-
 	for (int i = 0; i < 10; ++i)
 	{
 		QPushButton *addButton = new QPushButton(QIcon("./Resources/add.png"), tr(""), this);
@@ -49,7 +45,6 @@ AudioWall::AudioWall(QWidget *parent) : BaseWidget(parent)
 		addButtons.append(addButton);
 		connect(addButton, SIGNAL(clicked()), this, SLOT(addAudioView()));
 	}
-
 }
 
 AudioWall::~AudioWall()
@@ -59,28 +54,40 @@ AudioWall::~AudioWall()
 
 void AudioWall::addAudioView()
 {
-
 	QPushButton *test = qobject_cast<QPushButton *>(sender());
 	nth = test->y() / 50;
 
 	AddView = new BaseWidget();
-
-	QVBoxLayout *vLayout = new QVBoxLayout(AddView);
+	QVBoxLayout *vLayout = new QVBoxLayout();
 	vLayout->setAlignment(Qt::AlignHCenter);
 	vLayout->setSpacing(45);
+	AddView->setLayout(vLayout);
 
 	//设置采样率
-	QComboBox *VedioComboBox;
-	VedioComboBox = new QComboBox(AddView);
-	VedioComboBox->setFixedSize(QSize(150, 45));
-	VedioComboBox->insertItems(0, QStringList() << "48000" << "44100" << "32000" << "24000" << "22050" << "16000" << "12050" << "8000");
-	VedioComboBox->setStatusTip(tr("返回"));
-	VedioComboBox->setFont(font);
-	VedioComboBox->setPalette(pe);
-	VedioComboBox->setStyleSheet("QComboBox{ background - color: #454545; }");
-	vLayout->addWidget(VedioComboBox);
+	sampleRateComboBox = new QComboBox(AddView);
+	sampleRateComboBox->setFixedSize(QSize(150, 45));
+	sampleRateComboBox->insertItems(0, QStringList() << "48000" << "44100" << "32000" << "24000" << "22050" << "16000" << "12050" << "8000");
+	sampleRateComboBox->setStatusTip(tr("SAMPLERATE"));
+	sampleRateComboBox->setFont(font);
+	sampleRateComboBox->setPalette(pe);
+	sampleRateComboBox->setStyleSheet("QComboBox{ background - color: #454545; }");
+	vLayout->addWidget(sampleRateComboBox);
 
-	//VedioFileButton
+	//设置通道
+	m_deviceBox = new QComboBox(AddView);
+	m_deviceBox->setFixedSize(QSize(150, 45));
+	qDebug() << "l:" << QAudioDeviceInfo::defaultOutputDevice().deviceName();
+	foreach(const QAudioDeviceInfo &deviceInfo, QAudioDeviceInfo::availableDevices(QAudio::AudioOutput))
+	{
+		m_deviceBox->addItem(deviceInfo.deviceName(), qVariantFromValue(deviceInfo));
+	}
+	m_deviceBox->setStatusTip(tr("CHANNEL"));
+	m_deviceBox->setFont(font);
+	m_deviceBox->setPalette(pe);
+	m_deviceBox->setStyleSheet("QComboBox{ background - color: #454545; }");
+	vLayout->addWidget(m_deviceBox);
+
+	//设置文件
 	QPushButton *VedioFileButton;
 	VedioFileButton = new QPushButton(QIcon("./Resources/file.png"), tr(""), AddView);
 	VedioFileButton->setStatusTip(tr("Choose a File"));
@@ -88,34 +95,41 @@ void AudioWall::addAudioView()
 	VedioFileButton->setIconSize(QSize(45, 45));
 	vLayout->addWidget(VedioFileButton);
 
-	QHBoxLayout *hLayout = new QHBoxLayout();
 	QPushButton *BackButton;//取消
 	BackButton = new QPushButton(QIcon("./Resources/cancel.png"), tr(""), AddView);
 	BackButton->setStatusTip(tr("返回"));
 	BackButton->setFixedSize(QSize(45, 45));
 	BackButton->setIconSize(QSize(45, 45));
-	hLayout->addWidget(BackButton);
 	QPushButton *addOKButton;//添加
 	addOKButton = new QPushButton(QIcon("./Resources/ok.png"), tr(""), AddView);
 	addOKButton->setStatusTip(tr("返回"));
 	addOKButton->setFixedSize(QSize(45, 45));
 	addOKButton->setIconSize(QSize(45, 45));
+
+	QHBoxLayout *hLayout = new QHBoxLayout();
+	hLayout->addWidget(BackButton);
 	hLayout->addWidget(addOKButton);
 	vLayout->addLayout(hLayout);
 
-	connect(VedioComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(selectAudioType(int)));
+	connect(sampleRateComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(setSampleRate(int)));
+	connect(m_deviceBox, SIGNAL(activated(int)), this, SLOT(deviceChanged(int)));
 	connect(VedioFileButton, SIGNAL(clicked()), this, SLOT(openLocalFile()));
 	connect(BackButton, SIGNAL(clicked()), AddView, SLOT(close()));
 	connect(addOKButton, SIGNAL(clicked()), this, SLOT(AudioOK()));
 
-	AddView->setLayout(vLayout);
 	AddView->show();
 }
 
-void AudioWall::selectAudioType(const int &text)
+void AudioWall::setSampleRate(const int &index)
 {
-	int SampleRate[] = { 48000, 44100, 32000, 24000, 22050, 16000, 12050, 8000 };
-	SampleRates[nth] = SampleRate[text];
+	sampleRate = sampleRateComboBox->itemText(index);;
+}
+
+void AudioWall::deviceChanged(const int &index)
+{
+	taskName = QString::fromLocal8Bit("通道") + QString::number(index+1);
+	//taskName = m_deviceBox->itemText(index);
+	m_device = m_deviceBox->itemData(index).value<QAudioDeviceInfo>();
 }
 
 void AudioWall::openLocalFile()
@@ -151,123 +165,110 @@ void AudioWall::openLocalFile()
 	mpc        : MPC (Akai MPC 2k)
 	rf64       : RF64 (RIFF 64)
 	*/
-	QString file_path = QFileDialog::getOpenFileName(0, tr("Open an Audio File"), "./", "Vedio(*.wav, *.flac, *.aiff, *.ogg, *.mp3)");
-	QFileInfo file_info = QFileInfo(file_path);
-	int file_size = file_info.size();
-	QString file_name = file_info.fileName();
-	QString ab_path = file_info.absolutePath();
-	tasks[nth].filePath = file_path;
-	tasks[nth].name = file_name;
-	tasks[nth].size = file_size;
+	file_path = QFileDialog::getOpenFileName(0, tr("Open an Audio File"), "./", "Vedio(*.mp3, *.flac, *.aiff, *.ogg, *.wav)");
+	taskInfo = QFileInfo(file_path);
 }
 
 void AudioWall::AudioOK()
 {
-	WAVFile *inputFile = new WAVFile();
-	inputFile->open(tasks[nth].filePath, QIODevice::ReadOnly);
-	if (!inputFile->isReadable())
-	{
-		QMessageBox::warning(0, tr("warnning"), tr("The file is unreadable!\n"));
-		return;
-	}
-
-	//QAudioFormat audioFormat;//设置采样格式 
-	//audioFormat.setSampleRate(SampleRates[nth]);//设置采样率  
-	//audioFormat.setChannelCount(1);//设置通道数  
-	//audioFormat.setSampleSize(16);//设置采样大小，一般为8位或16位  
-	//audioFormat.setCodec("audio/pcm");//设置编码方式  
-	//audioFormat.setByteOrder(QAudioFormat::LittleEndian);//设置字节序  
-	//audioFormat.setSampleType(QAudioFormat::UnSignedInt);//设置样本数据类型
-
-	QAudioOutput *audio = new QAudioOutput(QAudioDeviceInfo::defaultOutputDevice(), inputFile->format());
+	QAudioFormat audioFormat;//设置采样格式 
+	audioFormat.setSampleRate(sampleRate.toInt());//设置采样率  
+	audioFormat.setChannelCount(1);//设置通道数  
+	audioFormat.setSampleSize(16);//设置采样大小，一般为8位或16位  
+	audioFormat.setCodec("audio/pcm");//设置编码方式  
+	audioFormat.setByteOrder(QAudioFormat::LittleEndian);//设置字节序  
+	audioFormat.setSampleType(QAudioFormat::UnSignedInt);//设置样本数据类型
 
 	QWidget *row = new QWidget(this);
 	row->setFixedHeight(45);
 	row->setWindowFlags(Qt::FramelessWindowHint);
-	row->setGeometry(5, nth * 50, 800, 45);
+	row->setGeometry(5, nth * 50, 650, 45);
 	QHBoxLayout *hLayout = new QHBoxLayout(row);
 	hLayout->setSpacing(5);
 
-	QLabel* taskName = new QLabel(row);
-	taskName->setText(tasks[nth].name);
-	taskName->setFixedHeight(45);
-	taskName->setFont(font);
-	taskName->setPalette(font_pe);
-	hLayout->addWidget(taskName, 20);
+	QLabel* taskNameLable = new QLabel(row);
+	taskNameLable->setText(taskName);
+	taskNameLable->setFixedHeight(45);
+	taskNameLable->setFont(font);
+	taskNameLable->setPalette(font_pe);
 
-	Slider* mpTimeSlider = new Slider(row);
-	mpTimeSlider->setDisabled(true);
-	mpTimeSlider->setTracking(true);
-	mpTimeSlider->setOrientation(Qt::Horizontal);
-	mpTimeSlider->setMinimum(0);
-	hLayout->addWidget(mpTimeSlider, 30);
-	mpTimeSliders.append(mpTimeSlider);
+	TimeSlider = new Slider(row);
+	TimeSlider->setTracking(true);
+	TimeSlider->setOrientation(Qt::Horizontal);
+	TimeSlider->setMinimum(0);
 
-	Slider* mpVolumeSlider = new Slider(row);
-	mpVolumeSlider->setMinimum(0);
-	//mpVolumeSlider->setInvertedAppearance(false);
-	hLayout->addWidget(mpVolumeSlider, 10);
-	mpVolumeSliders.append(mpVolumeSlider);
+	VolumeSlider = new Slider(row);
+	VolumeSlider->setOrientation(Qt::Vertical);
+	VolumeSlider->setMinimum(0);
 
 	QPushButton* start = new QPushButton(QIcon("./Resources/start.png"), tr(""), row);
 	start->setObjectName(QString::fromUtf8("start"));
 	start->setFixedSize(QSize(45, 45));
 	start->setIconSize(QSize(45, 45));
-	hLayout->addWidget(start, 10);
-
-	QPushButton* stop = new QPushButton(QIcon("./Resources/stop.png"), tr(""), row);
-	stop->setObjectName(QString::fromUtf8("stop"));
-	stop->setFixedSize(QSize(45, 45));
-	stop->setIconSize(QSize(45, 45));
-	hLayout->addWidget(stop, 10);
 
 	QPushButton* remove = new QPushButton(QIcon("./Resources/remove.png"), tr(""), row);
 	remove->setObjectName(QString::number(nth));
 	remove->setFixedSize(QSize(45, 45));
 	remove->setIconSize(QSize(45, 45));
-	hLayout->addWidget(remove, 10);
 
-	connect(audio, SIGNAL(stateChanged(QAudio::State)), this, SLOT(audio0(QAudio::State)));
-	connect(mpTimeSlider, SIGNAL(sliderPressed()), SLOT(seek()));
-	connect(mpTimeSlider, SIGNAL(sliderReleased()), SLOT(seek()));
-	connect(mpTimeSlider, SIGNAL(onLeave()), SLOT(onTimeSliderLeave()));
-	connect(mpTimeSlider, SIGNAL(onHover(int, int)), SLOT(onTimeSliderHover(int, int)));
+	hLayout->addWidget(taskNameLable, 5);
+	hLayout->addWidget(TimeSlider, 4);
+	hLayout->addWidget(VolumeSlider, 2);
+	hLayout->addWidget(start, 2);
+	hLayout->addWidget(remove, 2);
 
-	connect(mpVolumeSlider, SIGNAL(sliderPressed()), SLOT(setVolume()));
-	connect(mpVolumeSlider, SIGNAL(valueChanged(int)), SLOT(setVolume()));
 
-	connect(start, SIGNAL(clicked()), this, SLOT(Start()));
-	connect(stop, SIGNAL(clicked()), this, SLOT(Stop()));
+	QIODevice *inputFile = new QFile(file_path);
+	inputFile->open(QIODevice::ReadOnly);
+	m_audioOutput = new QAudioOutput(m_device,m_device.preferredFormat());
+	if (inputFile->isReadable())
+	{
+		m_audioOutput->start(inputFile);
+		AudioTask* task = new AudioTask(tr("Audio"), taskName, taskInfo, m_audioOutput, sampleRate);
+		task->taskTime = QDateTime::currentDateTime();
+		task->isFinished = false;
+		task->isPlaying = true;
+		emit updateAudioList(task);
+		tasks.append(task);
+	}
+	else
+	{
+		QMessageBox::warning(0, tr("warnning"), tr("The file is unreadable!\n"));
+		return;
+	}
+
+	connect(m_audioOutput, SIGNAL(stateChanged(QAudio::State)), this, SLOT(audio0(QAudio::State)));
+	connect(TimeSlider, SIGNAL(sliderPressed()), SLOT(seek()));
+	connect(TimeSlider, SIGNAL(sliderReleased()), SLOT(seek()));
+	connect(TimeSlider, SIGNAL(onLeave()), SLOT(onTimeSliderLeave()));
+	connect(TimeSlider, SIGNAL(onHover(int, int)), SLOT(onTimeSliderHover(int, int)));
+	connect(VolumeSlider, SIGNAL(sliderPressed()), SLOT(setVolume()));
+	connect(VolumeSlider, SIGNAL(valueChanged(int)), SLOT(setVolume()));
+	connect(start, SIGNAL(clicked()), this, SLOT(Start_Stop()));
 	connect(remove, SIGNAL(clicked()), this, SLOT(Remove()));
 
 	addButtons[nth]->hide();
 	row->show();
-
-	//更新
-	tasks[nth].type = "Audio";
-	tasks[nth].time = QDateTime::currentDateTime();
-	tasks[nth].progress = 0;
-	tasks[nth].playing = true;
-	tasks[nth].audio = audio;
-	players.append(audio);
-
-	emit updateList(&tasks[nth]);
-	audio->start();
 	AddView->close();
 }
 
-void AudioWall::Start()
+void AudioWall::SetState()
 {
 	QPushButton *test = qobject_cast<QPushButton *>(sender());
 	nth = test->y() / 50;
-	players[nth]->start();
-}
+	if (nth < tasks.size())
+		if (!tasks[nth]->audio->signalsBlocked())
+		{
+			tasks[nth]->audio->blockSignals(true);
+			test->setIcon(QIcon("./Resources/stop.png"));
+		}
+		else
+		{
+			tasks[nth]->audio->start();
+			test->setIcon(QIcon("./Resources/start.png"));
+		}
 
-void AudioWall::Stop()
-{
-	QPushButton *test = qobject_cast<QPushButton *>(sender());
-	nth = test->y() / 50;
-	players[nth]->stop();
+	emit updateAudioState(nth);
 }
 
 void AudioWall::Remove()
@@ -277,12 +278,15 @@ void AudioWall::Remove()
 	nth = w->y() / 50;
 	w->close();
 	addButtons[nth]->show();
+	tasks[nth]->isFinished = true;
+	emit updateAudioList(tasks[nth]);
+	tasks.removeAt(nth);
 }
 
 void AudioWall::seek()
 {
 	//players[nth]->setSeekType(AccurateSeek);
-	//players[nth]->((qint64)mpTimeSlider->value());
+	//players[nth]->((qint64)TimeSlider->value());
 }
 
 void AudioWall::onTimeSliderLeave()
@@ -293,25 +297,26 @@ void AudioWall::onTimeSliderLeave()
 
 void AudioWall::onTimeSliderHover(int pos, int value)
 {
-	//QPoint gpos = mapToGlobal(mpTimeSlider->pos() + QPoint(pos, 0));
+	//QPoint gpos = mapToGlobal(TimeSlider->pos() + QPoint(pos, 0));
 	//QToolTip::showText(gpos, QTime(0, 0, 0).addMSecs(value).toString(QString::fromLatin1("HH:mm:ss")));
 	//if (!m_preview)
 	//	m_preview = new VideoPreviewWidget();
 	//m_preview->setFile(mpPlayer->file());
 	//m_preview->setTimestamp(value);
 	//m_preview->setWindowFlags(m_preview->windowFlags() | Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);
+	//emit updateProgress(nth,value);
 }
 
 void AudioWall::setVolume()
 {
-	QAudioOutput *ao = players[nth];
-	qreal v = qreal(mpVolumeSliders[nth]->value())*kVolumeInterval;
-	if (ao)
+	QAudioOutput *temp = tasks[nth]->audio;
+	qreal v = qreal(tasks[nth]->volumeSlider->value())*kVolumeInterval;
+	if (temp)
 	{
-		if (qAbs(int(ao->volume() / kVolumeInterval) - mpVolumeSliders[nth]->value()) >= int(0.1 / kVolumeInterval))
+		if (qAbs(int(temp->volume() / kVolumeInterval) - tasks[nth]->volumeSlider->value()) >= int(0.1 / kVolumeInterval))
 		{
-			ao->setVolume(v);
+			temp->setVolume(v);
 		}
 	}
-	mpVolumeSliders[nth]->setToolTip(QString::number(v));
+	tasks[nth]->volumeSlider->setToolTip(QString::number(v));
 }

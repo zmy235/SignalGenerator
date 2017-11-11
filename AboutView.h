@@ -1,4 +1,3 @@
-//Í·ÎÄ¼þ£ºAboutView.h
 #ifndef AboutView_H
 #define AboutView_H
 

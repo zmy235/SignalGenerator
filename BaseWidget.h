@@ -1,4 +1,3 @@
-//Í·ÎÄ¼þ£ºBaseWidget.h
 #ifndef BASEWIDGET_H
 #define BASEWIDGET_H
 

@@ -1,11 +1,11 @@
-#ifndef QTAV_VIDEOWALL_H
-#define QTAV_VIDEOWALL_H
+#ifndef VIDEOWALL_H
+#define VIDEOWALL_H
 
+#include "BaseWidget.h"
+#include "VideoTask.h"
 #include <QtCore/QList>
 #include <QtAV/AVPlayer.h>
-#include <QtAVWidgets/WidgetRenderer.h>
-#include "BaseWidget.h"
-#include "Task.h"
+using namespace QtAV;
 
 QT_BEGIN_NAMESPACE
 class QMenu;
@@ -23,10 +23,7 @@ public:
 	int cols() const;
 	void setView(BaseWidget *base);
 	void show();
-    void play();
-	bool isPlaying;
-	QList<QtAV::AVPlayer*> players;
-	QMap<QtAV::AVPlayer*,QString> files;
+    void playAll();
 
 private:
     int r, c;
@@ -35,19 +32,26 @@ private:
 	BaseWidget *AddView;
     QMenu *menu;
     QString vid;
-	Task tasks[9];
-	QVector<QString> vedioTypes;
+
+	QList<VideoTask*> tasks;
+	QString taskName;
+	QString taskPath;
+	QDateTime taskTime;
+	QFileInfo taskInfo;
+	AVPlayer* player;
+	QSlider* timeSlider;
+	QSlider* volumeSlider;
 
 protected:
     virtual bool eventFilter(QObject *, QEvent *);
 
 signals:
-	void updateList(Task*);
+	void updateVideoList(VideoTask*);
+	void updateVideoState(int n);
 
 public slots:
 	void stop();
 	void close();
-    void openUrl();
 	void help();
 	void addVideoView();
 	void selectVideoType(const int &text);
@@ -56,4 +60,4 @@ public slots:
 
 };
 
-#endif // QTAV_VIDEOWALL_H
+#endif
