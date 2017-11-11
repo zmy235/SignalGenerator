@@ -33,7 +33,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 	ui.setupUi(this);
 
 	//变量初始化
-	ListNum = 0;
 	Base = ui.widget;
 	vLayout = ui.verticalLayout;
 	vLayout->setAlignment(Qt::AlignTop);
@@ -61,23 +60,21 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 	setView = new SetView();
 	aboutView = new AboutView();
 	audioView = new AudioWall();
-	videoView = new BaseWidget();
-	wall = new VideoWall();
-	wall->setView(videoView);
+	videoView = new VideoWall();
 
 	connect(setView, &SetView::updateVH, this, &MainWindow::updateVH);
 	connect(setView, &SetView::updateOpacity, this, &MainWindow::updateOpacity);
 	connect(audioView, &AudioWall::updateAudioList, this, &MainWindow::updateAudioList);
-	connect(wall, &VideoWall::updateVideoList, this, &MainWindow::updateVideoList);
+	connect(videoView, &VideoWall::updateVideoList, this, &MainWindow::updateVideoList);
 }
 
 MainWindow::~MainWindow()
 {
-	historyView->close();
-	setView->close();
-	aboutView->close();
-	wall->stop();
-	delete wall;
+	delete historyView;
+	delete setView;
+	delete aboutView;
+	delete audioView;
+	delete videoView;
 }
 
 void MainWindow::createActions()
@@ -168,7 +165,6 @@ void MainWindow::updateAudioList(AudioTask* task)
 	if (task->isFinished)
 	{
 		deleteRow(task);
-		ListNum--;
 	}
 	else
 	{
@@ -176,17 +172,12 @@ void MainWindow::updateAudioList(AudioTask* task)
 		AudioTaskList.append(task);
 		audioNth[AudioTaskList.size()] = taskList.size();
 		qDebug()
-			<< "============================================================="
+			<< "=============================================================\n"
 			<< task->taskType << endl
-			<< task->taskInfo.absolutePath() << endl
 			<< task->taskName << endl
-			<< task->taskInfo.size() << endl
 			<< task->taskProgress << endl
 			<< task->isPlaying << endl
 			<< task->isFinished << endl
-			<< task->taskTime << endl
-			<< taskList.size() << endl
-			<< "  ListNum：" << ListNum << endl
 			<< "=============================================================";
 
 		TaskRow *row = new TaskRow(Base, task);
@@ -197,8 +188,6 @@ void MainWindow::updateAudioList(AudioTask* task)
 		rows.append(row);
 		row->show();
 		connect(row->infoButton, SIGNAL(clicked()), this, SLOT(Info()));
-
-		ListNum++;
 	}
 }
 
@@ -211,15 +200,10 @@ void MainWindow::updateVideoList(VideoTask* task)
 	qDebug()
 		<< "============================================================="
 		<< task->taskType << endl
-		<< task->taskInfo.absoluteFilePath() << endl
 		<< task->taskName << endl
-		<< task->taskInfo.size() << endl
 		<< task->taskProgress << endl
 		<< task->isPlaying << endl
 		<< task->isFinished << endl
-		<< task->taskTime << endl
-		<< taskList.size() << endl
-		<< "  ListNum：" << ListNum << endl
 		<< "=============================================================";
 
 	TaskRow *row = new TaskRow(Base, task);
@@ -230,8 +214,6 @@ void MainWindow::updateVideoList(VideoTask* task)
 	rows.append(row);
 	row->show();
 	connect(row->infoButton, SIGNAL(clicked()), this, SLOT(Info()));
-
-	ListNum++;
 }
 
 void MainWindow::updateAudioState(int n)
@@ -250,6 +232,35 @@ void MainWindow::updateAudioState(int n)
 }
 
 void MainWindow::updateVideoState(int n)
+{
+	nth = videoNth[n];
+	QLabel *test = rows.at(nth)->findChild<QLabel *>("state");
+	if (VideoTaskList.at(n)->isPlaying)
+	{
+		test->setText("Paused");
+	}
+	else
+	{
+		test->setText("Playing");
+	}
+}
+
+void MainWindow::updateAudioProgress(int n)
+{
+	nth = audioNth[n];
+	QLabel *test = rows.at(nth)->findChild<QLabel *>("state");
+
+	if (AudioTaskList.at(n)->isPlaying)
+	{
+		test->setText("Paused");
+	}
+	else
+	{
+		test->setText("Playing");
+	}
+}
+
+void MainWindow::updateVideoProgress(int n)
 {
 	nth = videoNth[n];
 	QLabel *test = rows.at(nth)->findChild<QLabel *>("state");
@@ -292,7 +303,7 @@ void MainWindow::AudioView()
 
 void MainWindow::VideoView()
 {
-	wall->show();
+	videoView->show();
 }
 
 void MainWindow::History()

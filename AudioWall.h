@@ -6,11 +6,12 @@
 #include <QAudioFormat>
 #include <QAudioOutput>
 #include <QComboBox>
+#include <QToolBox>
 
 #include "BaseWidget.h"
 #include "Slider.h"
 #include "AudioTask.h"
-//#include "WAVFile.h"
+#include "WAVFile.h"
 
 QT_BEGIN_NAMESPACE
 class QMenu;
@@ -25,30 +26,29 @@ class AudioWall : public BaseWidget
 public:
 	explicit AudioWall(QWidget *parent = 0);
 	~AudioWall();
-	void eventFilter(QMouseEvent *);
-	void createAudioOutput();
 
 public:
 	int nth;
-	QList<QPushButton*> addButtons;
-	QVBoxLayout *vLayout;
+	QVBoxLayout *layout;
+	QWidget *row;
+	QPushButton* addButton;
+
 	BaseWidget *AddView;
 	QList<AudioTask*> tasks;
 	QString taskName;
 	QString file_path;
 	QFileInfo taskInfo;
-
 	QComboBox *sampleRateComboBox;
 	QString sampleRate;
-
+	WAVFile *inputFile;
+	qint64 fileSize;
 	QComboBox *m_deviceBox;
 	QAudioDeviceInfo m_device;
 	QIODevice *m_output;
 	QAudioOutput *m_audioOutput;
 	QAudioFormat m_format;
-
-	Slider* TimeSlider;
-	Slider* VolumeSlider;
+	QSlider* TimeSlider;
+	QSlider* VolumeSlider;
 
 	QFont font;
 	QPalette pe;
@@ -57,21 +57,21 @@ public:
 signals:
 	void updateAudioList(AudioTask*);
 	void updateAudioState(int);
+	void updateAudioProgress(int);
 
 public slots:
 	void addAudioView();
-	void setSampleRate(const int &index);
-	void deviceChanged(const int &index);
+	void setSampleRate(const int &);
+	void deviceChanged(const int &);
 	void openLocalFile();
 	void AudioOK();
+	void Remove(); 
+	void updateAudioState(QAudio::State);
+	void setState();
+	void setSliderPosition();
+	void setPlayerPosition(int);
+	void setVolume(int);
 
-	void seek();
-	void onTimeSliderHover(int pos, int value);
-	void onTimeSliderLeave();
-	void setVolume();
-
-	void SetState();
-	void Remove();
 };
 
 #endif

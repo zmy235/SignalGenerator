@@ -17,7 +17,7 @@ public:
 	void setAreaMovable(const QRect rt);//设置鼠标按下可移动窗口的区域，在子窗口中必须设置该区域
 
 public:
-	static float v;//全局
+	static float v;//透明度
 
 protected:
 	void mousePressEvent(QMouseEvent *);

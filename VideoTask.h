@@ -2,6 +2,7 @@
 #define VIDEOTASK_H
 
 #include "Task.h"
+#include "Slider.h"
 #include <QtAV/AVPlayer.h>
 #include <QSlider>
 #include <QFileInfo>

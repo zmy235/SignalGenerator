@@ -2,6 +2,7 @@
 #define AUDIOTASK_H
 
 #include "Task.h"
+#include "WAVFile.h"
 #include <QAudioOutput>
 #include <QSlider>
 
@@ -25,8 +26,8 @@ public:
 	~AudioTask()
 	{
 		delete audio;
+		delete file;
 		delete timeSlider;
-		delete volumeSlider;
 	}
 
 	void start()
@@ -51,8 +52,9 @@ public:
 public:
 	QString sampleRate;
 	QAudioOutput* audio;
-	QSlider* timeSlider;
-	QSlider* volumeSlider;
+	WAVFile *file;
+	qint64 size;
+	QSlider *timeSlider;
 };
 
 #endif

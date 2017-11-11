@@ -20,6 +20,7 @@ protected:
     virtual void leaveEvent(QEvent *e);
     virtual void mouseMoveEvent(QMouseEvent* event);
     virtual void mousePressEvent(QMouseEvent *event);
+
 //#if CODE_FOR_CLICK == 1
     inline int pick(const QPoint &pt) const;
     int pixelPosToRangeValue(int pos) const;

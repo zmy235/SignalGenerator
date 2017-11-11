@@ -12,15 +12,11 @@ BaseWidget::BaseWidget(QWidget *parent) : QWidget(parent)
 	m_areaMovable = geometry();
 	m_bPressed = false;
 
-	//设置窗口大小
-	setMinimumSize(640, 480);
-
 	//设置无边框透明
 	setWindowOpacity(v);
 	//setWindowFlags(Qt::FramelessWindowHint);
 	//setWindowFlags(Qt::CustomizeWindowHint);
 
-	//设置QPalette对象的背景属性（颜色或图片）  
 	QPalette palette;
 	palette.setBrush(QPalette::Background, QBrush(QPixmap("./Resources/background.png")));
 	setPalette(palette);
@@ -53,9 +49,10 @@ void BaseWidget::mouseReleaseEvent(QMouseEvent *)
 	m_bPressed = false;
 }
 
-//设置鼠标按下的区域
+
 void BaseWidget::setAreaMovable(const QRect rt)
 {
+	//设置可移动的区域
 	if (m_areaMovable != rt)
 	{
 		m_areaMovable = rt;

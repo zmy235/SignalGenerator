@@ -44,8 +44,7 @@ private:
 	AboutView *aboutView;
 	HistoryView *historyView;
 	AudioWall *audioView;
-	BaseWidget *videoView;
-	VideoWall *wall;
+	VideoWall *videoView;
 
 private:
 
@@ -70,7 +69,6 @@ private:
 	QList<VideoTask*> VideoTaskList;//全局音频任务列表
 	QList<TaskRow*> rows;//行控件
 
-	int ListNum;
 	int nth;//当前操作位置
 	int audioNth[10];//音频任务对应位置
 	int videoNth[9];//视频任务对应位置
@@ -84,7 +82,7 @@ private:
 	void mousePressEvent(QMouseEvent *);
 	void mouseMoveEvent(QMouseEvent *);
 	void mouseReleaseEvent(QMouseEvent *);
-	void setAreaMovable(const QRect rt); 
+	void setAreaMovable(const QRect rt);
 	void deleteRow(Task*);
 
 	private slots:
@@ -93,6 +91,8 @@ private:
 	void updateVideoList(VideoTask*);
 	void updateAudioState(int);
 	void updateVideoState(int);
+	void updateAudioProgress(int);
+	void updateVideoProgress(int);
 	void updateVH(bool);
 	void updateOpacity(int);
 	void updateFramless(bool);
