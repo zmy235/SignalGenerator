@@ -11,14 +11,11 @@
 class Task
 {
 public:
-	Task(QString a, QString b, QFileInfo c) :
-		taskType(a),
-		taskName(b),
-		taskInfo(c){}
-	~Task(){}
+	Task(QString a, QString b, QFileInfo c) : taskType(a), taskName(b), taskInfo(c){}
+	virtual ~Task() {}
 	virtual void start() = 0;
 	virtual void pause() = 0;
-	virtual void cancel() = 0;
+	virtual void stop() = 0;
 
 public:
 	QString taskType;
@@ -26,7 +23,6 @@ public:
 	QFileInfo taskInfo;
 	QDateTime taskTime;
 	int taskProgress;
-	bool isPlaying;
 	bool isFinished;
 };
 

@@ -11,44 +11,30 @@ using namespace QtAV;
 class VideoTask : public Task
 {
 public:
-	VideoTask(QString a, QString b, QFileInfo c, AVPlayer* d) :
-		Task(a, b, c),
-		video(d)
+	VideoTask(QString a, QString b, QFileInfo c, AVPlayer* d) : Task(a, b, c), video(d)
 	{
 		taskType = a;
 		taskName = b;
 		taskInfo = c;
 		taskProgress = 0;
-		isPlaying = false;
 		isFinished = false;
 	}
-
 	~VideoTask()
 	{
 		delete video;
 		delete timeSlider;
 		delete volumeSlider;
 	}
-
-	void start()
+	AVPlayer::State getState(){ return video ? video->state() : AVPlayer::StoppedState; }
+	qint64 size(){ return taskInfo.size(); }
+	void start(){ if (getState() != AVPlayer::PlayingState) video->play(); }
+	void pause(){ if (getState() == AVPlayer::PlayingState) video->pause(); }
+	void stop(){ if (getState() != AVPlayer::StoppedState) video->pause(); }
+	void setState()
 	{
-		if (!video->isPlaying()) 
-			video->play();
-		isPlaying = true;
+		if (getState() == AVPlayer::PlayingState)video->pause();
+		else video->play();
 	}
-
-	void pause()
-	{
-		video->pause();
-		isPlaying = false;
-	}
-
-	void cancel()
-	{
-		video->pause();
-		isPlaying = false;
-	}
-
 public:
 	AVPlayer* video;
 	QSlider* timeSlider;

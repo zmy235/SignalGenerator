@@ -17,7 +17,7 @@
 #include <QGridLayout>
 #include <QHBoxLayout>
 #include <QInputDialog>
-#include <QKeyEvent>
+#include <QEvent>
 #include <QMenu>
 #include <QMessageBox>
 #include <QPalette>
@@ -26,31 +26,39 @@
 #include <QUrl>
 #include <QWidget>
 
-const qreal kVolumeInterval = 0.04;
-
 AudioWall::AudioWall(QWidget *parent) : BaseWidget(parent)
 {
-	setWindowTitle(tr("Audio Wall"));
+	setWindowTitle(QString::fromLocal8Bit("音频输出窗口"));
 	setFixedSize(650, 500);
+	nth = 0;
 	layout = new QVBoxLayout(this);
 	layout->setAlignment(Qt::AlignTop);
 	layout->setMargin(5);
 	font = QFont("Cambria", 12, 28, false);
 	font.setBold(true);
-	font_pe.setColor(QPalette::WindowText, Qt::white);
+	font_pe.setColor(QPalette::WindowText, Qt::black);
 	pe.setColor(QPalette::ButtonText, Qt::white);
-	nth = 0;
-	addButton = new QPushButton(QIcon("./Resources/add.png"), tr(""), this);
-	addButton->setStatusTip(tr("添加"));
-	addButton->setFixedSize(QSize(45, 45));
-	addButton->setIconSize(QSize(45, 45));
-	layout->addWidget(addButton);
-	connect(addButton, SIGNAL(clicked()), this, SLOT(addAudioView()));
+	installEventFilter(this);
 }
 
 AudioWall::~AudioWall()
 {
+}
 
+bool AudioWall::eventFilter(QObject *watched, QEvent *event)
+{
+	if (event->type() == QEvent::ContextMenu)
+	{
+		QContextMenuEvent *e = static_cast<QContextMenuEvent*>(event);
+		QMenu *menu = new QMenu();
+		menu->addAction(tr("Add Task"), this, SLOT(addAudioView()));
+		menu->addAction(tr("Start All"), this, SLOT(playAll()));
+		menu->addAction(tr("Exit"), this, SLOT(close()));
+		menu->popup(e->globalPos());
+		menu->exec();
+		return true;
+	}
+	return false;
 }
 
 void AudioWall::addAudioView()
@@ -85,12 +93,12 @@ void AudioWall::addAudioView()
 	vLayout->addWidget(m_deviceBox);
 
 	//设置文件
-	QPushButton *VedioFileButton;
-	VedioFileButton = new QPushButton(QIcon("./Resources/file.png"), tr(""), AddView);
-	VedioFileButton->setStatusTip(tr("Choose a File"));
-	VedioFileButton->setFixedSize(QSize(45, 45));
-	VedioFileButton->setIconSize(QSize(45, 45));
-	vLayout->addWidget(VedioFileButton);
+	QPushButton *selectFileButton;
+	selectFileButton = new QPushButton(QIcon("./Resources/file.png"), tr(""), AddView);
+	selectFileButton->setStatusTip(tr("Choose a File"));
+	selectFileButton->setFixedSize(QSize(45, 45));
+	selectFileButton->setIconSize(QSize(45, 45));
+	vLayout->addWidget(selectFileButton);
 
 	QPushButton *BackButton;//取消
 	BackButton = new QPushButton(QIcon("./Resources/cancel.png"), tr(""), AddView);
@@ -110,7 +118,7 @@ void AudioWall::addAudioView()
 
 	connect(sampleRateComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(setSampleRate(int)));
 	connect(m_deviceBox, SIGNAL(activated(int)), this, SLOT(deviceChanged(int)));
-	connect(VedioFileButton, SIGNAL(clicked()), this, SLOT(openLocalFile()));
+	connect(selectFileButton, SIGNAL(clicked()), this, SLOT(openLocalFile()));
 	connect(BackButton, SIGNAL(clicked()), AddView, SLOT(close()));
 	connect(addOKButton, SIGNAL(clicked()), this, SLOT(AudioOK()));
 
@@ -169,9 +177,9 @@ void AudioWall::openLocalFile()
 void AudioWall::AudioOK()
 {
 	row = new QWidget(this);
-	row->setFixedHeight(45);
+	row->setFixedHeight(50);
 	row->setWindowFlags(Qt::FramelessWindowHint);
-	layout->insertWidget(0, row);
+	layout->addWidget(row);
 
 	QHBoxLayout *hLayout = new QHBoxLayout(row);
 	hLayout->setSpacing(5);
@@ -188,18 +196,20 @@ void AudioWall::AudioOK()
 	fileNameLable->setFont(font);
 	fileNameLable->setPalette(font_pe);
 
-	TimeSlider = new QSlider(row);
+	QSlider *TimeSlider = new QSlider(row);
 	TimeSlider->setOrientation(Qt::Horizontal);
 	TimeSlider->setTickPosition(QSlider::TicksAbove);//设置刻度
 	TimeSlider->setTickInterval(5);
 	TimeSlider->setMinimum(0);
 	TimeSlider->setMaximum(100);
+	timeSliders.append(TimeSlider);
 
-	VolumeSlider = new QSlider(row);
+	QSlider *VolumeSlider = new QSlider(row);
 	VolumeSlider->setTracking(true);//实时改变
 	VolumeSlider->setOrientation(Qt::Vertical);
 	VolumeSlider->setMinimum(0);
 	VolumeSlider->setMaximum(100);
+	volumeSliders.append(VolumeSlider);
 
 	QPushButton* state = new QPushButton(QIcon("./Resources/start.png"), tr(""), row);
 	state->setFixedSize(QSize(45, 45));
@@ -208,19 +218,12 @@ void AudioWall::AudioOK()
 	remove->setFixedSize(QSize(45, 45));
 	remove->setIconSize(QSize(45, 45));
 
-	hLayout->addWidget(taskNameLable);
-	hLayout->addWidget(fileNameLable);
-	hLayout->addWidget(TimeSlider);
-	hLayout->addWidget(VolumeSlider);
-	hLayout->addWidget(state);
-	hLayout->addWidget(remove);
-
-	hLayout->setStretch(0, 2);
-	hLayout->setStretch(1, 4);
-	hLayout->setStretch(2, 4);
-	hLayout->setStretch(3, 1);
-	hLayout->setStretch(4, 1);
-	hLayout->setStretch(5, 1);
+	hLayout->addWidget(taskNameLable, 2);
+	hLayout->addWidget(fileNameLable, 4);
+	hLayout->addWidget(TimeSlider, 4);
+	hLayout->addWidget(VolumeSlider, 1);
+	hLayout->addWidget(state, 1);
+	hLayout->addWidget(remove, 1);
 
 	m_format.setSampleRate(sampleRate.toInt());//设置采样率  
 	m_format.setChannelCount(1);//设置通道数  
@@ -232,19 +235,19 @@ void AudioWall::AudioOK()
 	inputFile = new WAVFile;
 	inputFile->open(file_path, QIODevice::ReadOnly);
 	m_format = m_device.preferredFormat();
-	m_audioOutput = new QAudioOutput(m_device, m_format);
+	QAudioOutput *m_audioOutput = new QAudioOutput(m_device, m_format);
 	m_audioOutput->setNotifyInterval(1000);
 	if (inputFile->isReadable())
 	{
 		AudioTask* task = new AudioTask(tr("Audio"), taskName, taskInfo, m_audioOutput, sampleRate);
+		m_audioOutput->start(inputFile);
+		players.append(m_audioOutput);
 		task->file = inputFile;
 		task->size = inputFile->size();
-		inputFile->seek(0);
-		m_audioOutput->start(inputFile);
 		task->timeSlider = TimeSlider;
 		task->taskTime = QDateTime::currentDateTime();
 		task->isFinished = false;
-		task->isPlaying = true;
+		inputFile->seek(0);
 		emit updateAudioList(task);
 		tasks.append(task);
 		AddView->close();
@@ -264,7 +267,7 @@ void AudioWall::AudioOK()
 	connect(remove, SIGNAL(clicked()), this, SLOT(Remove()));
 }
 
-void AudioWall::updateAudioState(QAudio::State)
+void AudioWall::setAudioState(QAudio::State state)
 {
 	emit updateAudioState(nth);
 }
@@ -274,16 +277,14 @@ void AudioWall::setState()
 	QPushButton *test = qobject_cast<QPushButton *>(sender());
 	QWidget *w = test->parentWidget();
 	nth = w->y() / 50;
-	if (!tasks[nth]->audio->signalsBlocked())
+	if (tasks[nth]->getState()==QAudio::ActiveState)
 	{
-		tasks[nth]->audio->blockSignals(true);
-		tasks[nth]->isPlaying = false;
+		tasks[nth]->stop();
 		test->setIcon(QIcon("./Resources/start.png"));
 	}
 	else
 	{
-		tasks[nth]->audio->start();
-		tasks[nth]->isPlaying = true;
+		tasks[nth]->start();
 		test->setIcon(QIcon("./Resources/stop.png"));
 	}
 	emit updateAudioState(nth);
@@ -311,21 +312,30 @@ void AudioWall::setPlayerPosition(int value)
 	QWidget *w = test->parentWidget();
 	nth = w->y() / 50;
 	qDebug() << nth << ": " << value;
-	qint64 allData = tasks[nth]->file->size();
-	tasks[nth]->file->seek(allData / 100 * value);
-	test->setToolTip(QString::number(value)); 
+	tasks[nth]->file->seek(tasks[nth]->size / 100 * value);
+	test->setToolTip(QString::number(value));
+
+	emit updateAudioProgress(nth, value);
 }
 
 void AudioWall::setSliderPosition()
 {
-	QAudioOutput *test = qobject_cast<QAudioOutput *>(sender());
-	qint64 bytesInBuffer = test->bufferSize() - test->bytesFree();
-	qint64 usInBuffer = (qint64)(1000000) * bytesInBuffer / (m_format.channelCount() * m_format.sampleSize() / 8) / m_format.bytesPerFrame();
-	qint64 usPlayed = test->processedUSecs() - usInBuffer;
-	inputFile->seek(usPlayed);
-	qint64 allData = tasks[nth]->size;
-	qDebug() <<"size "<<tasks[nth]->size<< " played " << test->processedUSecs() << "  BUfferSize: " << test->bufferSize();
-	tasks[nth]->timeSlider->setValue(usPlayed*100/allData);
+	static int processed = 0;
+	static int position = 0;
+	QAudioOutput *audio = qobject_cast<QAudioOutput *>(sender());
+	nth = players.indexOf(audio);
+	QSlider *slider = tasks[nth]->timeSlider;
+	int n = audio->bufferSize();
+	if (position != slider->sliderPosition()) //如果进度条被拖放，则将该位置置为起点
+		processed += slider->sliderPosition() * tasks[nth]->size / 100 + n;
+	else
+		processed += n;
+	qDebug() << "size: " << tasks[nth]->size << " \t " << processed;
+	int value = processed * 100 / tasks[nth]->size;
+	slider->setValue(value);
+	position = slider->sliderPosition();
+
+	emit updateAudioProgress(nth, value);
 }
 
 void AudioWall::setVolume(int value)
@@ -335,6 +345,6 @@ void AudioWall::setVolume(int value)
 	nth = w->y() / 50;
 	qDebug() << nth << "\n" << value;
 	QAudioOutput *temp = tasks[nth]->audio;
-	if (temp) temp->setVolume(value*1.0/100.0);
+	if (temp) temp->setVolume(value*1.0 / 100.0);
 	test->setToolTip(QString::number(value));
 }

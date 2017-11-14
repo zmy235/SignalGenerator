@@ -6,15 +6,15 @@
 #include<Windows.h>
 #include<QWidget>
 #include<QSlider>
+#include<QSpinBox>
 #include<QPalette>
 #include<QFont>
 #include<QHBoxLayout>
 #include<QRect>
 #include<QPoint>
-#include<QDockWidget>
 #include<QPushButton>
 #include<QTextEdit>
-#include<QRadioButton>
+#include<QCheckBox>
 #include<QComboBox>
 #include<QUrl>
 #include<QFileDialog>
@@ -22,66 +22,98 @@
 SetView::SetView(QWidget *parent) : BaseWidget(parent)
 {
 	setWindowTitle(tr("Setting"));
+	setFixedSize(640, 480);
+
+	QFont font;
 	font = QFont("Times", 16, 32, false);
 	font.setBold(true);
-	pe.setColor(QPalette::ButtonText, Qt::white);
 
-	BaseView = new QWidget(this);
-	BaseView->setFixedSize(500, 350);
-	BaseView->setGeometry(QRect(0, 50, 500, 350));
+	QPalette pe;
+	pe.setColor(QPalette::WindowText, Qt::white);
+
+	VH = new QCheckBox(this);
+	VH->setText(QString::fromLocal8Bit("菜单栏顶置"));
+	VH->setFont(font);
+	VH->setPalette(pe);
+
+	Fram = new QCheckBox(this);
+	Fram->setText(QString::fromLocal8Bit("简洁化窗口"));
+	Fram->setFont(font);
+	Fram->setPalette(pe);
+
+	hSlider = new QSlider(this);
+	hSlider->setWindowIconText(QString::fromLocal8Bit("Set The Windows Style"));
+	hSlider->setOrientation(Qt::Horizontal);
+	hSlider->setMaximum(100);
+	hSlider->setFixedWidth(180);
+	hSlider->setSingleStep(1);
+	spinBox = new QSpinBox(this);
+	spinBox->setFixedWidth(50);
+	spinBox->setMaximum(100);
+
+	QHBoxLayout *hlayout1 = new QHBoxLayout();
+	hlayout1->setSpacing(50);
+	hlayout1->addWidget(hSlider);
+	hlayout1->addWidget(spinBox);
 
 	BackButton = new QPushButton(QIcon("./Resources/cancel.png"), tr(""), this);
 	BackButton->setStatusTip(tr("返回"));
-	BackButton->setGeometry(QRect(0, 0, 50, 50));
 	BackButton->setFixedSize(QSize(45, 45));
 	BackButton->setIconSize(QSize(45, 45));
+	OKButton = new QPushButton(QIcon("./Resources/ok.png"), tr(""), this);
+	OKButton->setStatusTip(tr("返回"));
+	OKButton->setFixedSize(QSize(45, 45));
+	OKButton->setIconSize(QSize(45, 45));
 
-	VH = new QRadioButton(BaseView);
-	VH->setText(tr("Set The ToolBar To The Top"));
-	VH->setGeometry(QRect(100, 110, 89, 16));
+	QHBoxLayout *hlayout = new QHBoxLayout();
+	hlayout->setSpacing(50);
+	hlayout->addWidget(BackButton);
+	hlayout->addWidget(OKButton);
 
-	Fram = new QRadioButton(BaseView);
-	Fram->setText(tr("Set The Windows Framless"));
-	Fram->setGeometry(QRect(100, 110, 89, 16));
+	QVBoxLayout *vlayout = new QVBoxLayout(this);
+	vlayout->setSpacing(50);
+	vlayout->setAlignment(Qt::AlignCenter);
+	vlayout->addWidget(VH);
+	vlayout->addWidget(Fram);
+	vlayout->addLayout(hlayout1);
+	vlayout->addLayout(hlayout);
 
-	hSlider = new QSlider(BaseView);
-	hSlider->setGeometry(QRect(100, 200, 160, 20));
-	hSlider->setMaximum(100);
-	hSlider->setSingleStep(1);
-	hSlider->setOrientation(Qt::Horizontal);
-
-	connect(BackButton, SIGNAL(clicked()), this, SLOT(Back()));
-	connect(VH, SIGNAL(clicked(bool)), this, SLOT(setVH(bool)));
-	connect(Fram, SIGNAL(clicked(bool)), this, SLOT(setFramless(bool)));
+	connect(VH, SIGNAL(stateChanged(int)), this, SLOT(setVH(int)));
+	connect(Fram, SIGNAL(stateChanged(int)), this, SLOT(setFramless(int)));
 	connect(hSlider, SIGNAL(valueChanged(int)), this, SLOT(setOpacity(int)));
+	connect(spinBox, SIGNAL(valueChanged(int)), this, SLOT(setOpacity(int)));
+	connect(BackButton, SIGNAL(clicked()), this, SLOT(close()));
+	connect(OKButton, SIGNAL(clicked()), this, SLOT(close()));
 }
 
 SetView::~SetView()
 {
-
+	delete VH;
+	delete Fram;
+	delete spinBox;
+	delete hSlider;
+	delete BackButton;
+	delete OKButton;
 }
 
 void SetView::setOpacity(int value)
 {
 	BaseWidget::v = (100.0 - value) / 100.0;
-	this->setWindowOpacity(BaseWidget::v);
-	//更新主窗体
+	setWindowOpacity(BaseWidget::v);
+	spinBox->setValue(value);
+	hSlider->setValue(value);
 	emit updateOpacity(value);
 }
 
-void SetView::setVH(bool value)
+void SetView::setVH(int value)
 {
-	//更新主窗体
 	emit updateVH(value);
 }
 
-void SetView::setFramless(bool value)
+void SetView::setFramless(int value)
 {
-	//更新主窗体
+	if(value) setWindowFlags(Qt::FramelessWindowHint);
+	else setWindowFlags(Qt::WindowCloseButtonHint);
 	emit updateFramless(value);
-}
-
-void SetView::Back()
-{
-	this->close();
+	show();
 }

@@ -49,21 +49,21 @@ private:
 
 signals:
 	void updateVideoList(VideoTask*);
-	void updateVideoState(int n);
+	void updateVideoState(int);
+	void updateVideoProgress(int,int);
 
 	public slots:
 	void playAll();
 	void stopAll();
 	void help();
 	void addVideoView();
-	void setVideoType(const int &text);
+	void setVideoType(const int &);
 	void openLocalFile();
 	void VedioOK();
-	void seek();
-	void seek(int);
-	void onTimeSliderLeave();
-	void onTimeSliderHover(int pos, int value);
-	void onPositionChange(qint64 pos);
+
+	void setSliderPosition(qint64);
+	void setPlayerPosition(int);
+	void setVolume(int);
 };
 
 #endif

@@ -1,13 +1,16 @@
 #ifndef TaskRow_H
 #define TaskRow_H
 
+#include "Task.h"
+
 #include <QWidget>
 #include <QLabel>
 #include <QProgressBar>
 #include <QPushButton>
-#include "Task.h"
+#include <QPalette>
+#include <QFont>
+#include <QHBoxLayout>
 
-//继承自QWidget的自定义控件
 class TaskRow : public QWidget
 {
 	Q_OBJECT

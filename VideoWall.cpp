@@ -35,16 +35,16 @@ typedef struct
 	QRect rect;
 }SCREEN;
 SCREEN g_screens[10];
-const int kSyncInterval = 2000;
+
 VideoRendererId v = VideoRendererId_Widget;
 
 VideoWall::VideoWall(QWidget *parent) : QWidget(parent)
 {
-	r = 3, c = 3, nth = 0, menu = 0;
+	setWindowTitle(QString::fromLocal8Bit("视频输出窗口"));
+	setMinimumSize(640, 480);
 	font = QFont("Times", 16, 32, false);
 	font.setBold(true);
 	pe.setColor(QPalette::ButtonText, Qt::white);
-	setMinimumSize(640, 480);
 
 	installEventFilter(this);
 	v = VideoRendererId_OpenGLWidget;//视频渲染器的ID，即使用的解码器来源
@@ -56,6 +56,7 @@ VideoWall::VideoWall(QWidget *parent) : QWidget(parent)
 	layout->setContentsMargins(0, 0, 0, 0);
 
 	//将每一个播放器放入播放器列表
+	r = 3, c = 3, nth = 0, menu = 0;
 	int w = this->frameGeometry().width() / c;
 	int h = this->frameGeometry().height() / r;
 	for (int i = 0; i < r; ++i)
@@ -69,10 +70,9 @@ VideoWall::VideoWall(QWidget *parent) : QWidget(parent)
 			rendererWidget->resize(w, h);
 			rendererWidget->setAcceptDrops(true);
 			rendererWidget->move(j*w, i*h);
-			QVBoxLayout *layout = new QVBoxLayout();
+			QVBoxLayout *layout = new QVBoxLayout(rendererWidget);
 			layout->setAlignment(Qt::AlignBottom);
-			rendererWidget->setLayout(layout);
-			((QGridLayout*)this->layout())->addWidget(rendererWidget, i, j);//将每个播放器渲染器按格子布局放入
+			((QGridLayout*) this->layout())->addWidget(rendererWidget, i, j);//将每个播放器渲染器按格子布局放入
 			rendererWidgets.append(rendererWidget);
 
 			AVPlayer* player = new AVPlayer();
@@ -83,13 +83,27 @@ VideoWall::VideoWall(QWidget *parent) : QWidget(parent)
 			timeSlider->setOrientation(Qt::Horizontal);
 			timeSlider->setMinimum(0);
 			timeSlider->setMaximum(100);
-			timeSlider->setTracking(true);
-			timeSlider->setEnabled(true);//player->isSeekable()
+			timeSlider->setValue(0);
+			timeSlider->setEnabled(true);
 			timeSliders.append(timeSlider);
-			layout->addWidget(timeSlider);
+			QSlider* VolumeSlider = new QSlider(rendererWidget);
+			VolumeSlider->setTracking(true);//实时改变
+			VolumeSlider->setOrientation(Qt::Vertical);
+			VolumeSlider->setMinimum(0);
+			VolumeSlider->setMaximum(100);
+			VolumeSlider->setFixedHeight(50);
+			VolumeSlider->setValue(0);
+			VolumeSlider->setEnabled(true);
+			volumeSliders.append(VolumeSlider);
 
-			connect(timeSlider, SIGNAL(sliderMoved(int)), this, SLOT(seek(int)));
-			connect(player, SIGNAL(positionChanged(qint64)), this, SLOT(onPositionChange(qint64)));
+			QHBoxLayout *hlayout = new QHBoxLayout();
+			hlayout->addWidget(timeSlider,5);
+			hlayout->addWidget(VolumeSlider,1);
+			layout->addLayout(hlayout);
+
+			connect(timeSlider, SIGNAL(sliderMoved(int)), this, SLOT(setPlayerPosition(int)));
+			connect(VolumeSlider, SIGNAL(sliderMoved(int)), this, SLOT(setVolume(int)));
+			connect(player, SIGNAL(positionChanged(qint64)), this, SLOT(setSliderPosition(qint64)));
 		}
 	}
 
@@ -198,7 +212,7 @@ void VideoWall::help()
 
 bool VideoWall::eventFilter(QObject *watched, QEvent *event)
 {
-	qDebug("EventFilter::eventFilter to %p", watched);
+	//qDebug("EventFilter::eventFilter to %p", watched);
 	int w = frameGeometry().width() / c;
 	int h = frameGeometry().height() / r;
 	switch (event->type())
@@ -423,6 +437,7 @@ void VideoWall::VedioOK()
 {
 	VideoTask* task = new VideoTask(tr("Video"), taskName, taskInfo, players[nth]);
 	task->taskTime = QDateTime::currentDateTime();
+	task->video = players[nth];
 	emit updateVideoList(task);
 	tasks.append(task);
 	taskMap[nth] = task;
@@ -435,46 +450,32 @@ void VideoWall::VedioOK()
 	rendererWidget->move(g_screens[nth].rect.x(), g_screens[nth].rect.y());
 	//rendererWidget->show();
 	//player->addVideoRenderer(renderer);
-	timeSliders[nth]->setMinimum(players[nth]->mediaStartPosition());
-	timeSliders[nth]->setMaximum(players[nth]->mediaStopPosition());
-	timeSliders[nth]->setValue(0);
 	players[nth]->play();
 	AddView->close();
 }
 
-void VideoWall::seek(int value)
-{
-	QSlider *s = qobject_cast<QSlider *>(sender());
-	int n = timeSliders.indexOf(s);
-	//players[n]->setSeekType(AccurateSeek);
-	qint64 p = (value * players[n]->mediaStopPosition()) / 100;
-	players[n]->seek(p);
-}
-
-void VideoWall::seek()
-{
-	seek(timeSliders[nth]->value());
-}
-
-void VideoWall::onTimeSliderLeave()
-{
-	if (m_preview && m_preview->isVisible())
-		m_preview->hide();
-}
-
-void VideoWall::onTimeSliderHover(int pos, int value)
-{
-	QPoint gpos = mapToGlobal(timeSliders[nth]->pos() + QPoint(pos, 0));
-	QToolTip::showText(gpos, QTime(0, 0, 0).addMSecs(value).toString(QString::fromLatin1("HH:mm:ss")));
-	if (!m_preview) m_preview = new VideoPreviewWidget();
-	m_preview->setFile(players[nth]->file());
-	m_preview->setTimestamp(value);
-	m_preview->setWindowFlags(m_preview->windowFlags() | Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);
-}
-
-void VideoWall::onPositionChange(qint64 pos)
+void VideoWall::setSliderPosition(qint64 pos)
 {
 	AVPlayer * s = qobject_cast<AVPlayer *>(sender());
 	int n = players.indexOf(s);
-	timeSliders[n]->setValue(pos);
+	timeSliders[n]->setValue(pos * 100 / s->mediaStopPosition());
+}
+
+void VideoWall::setPlayerPosition(int value)
+{
+	QSlider *s = qobject_cast<QSlider *>(sender());
+	int n = timeSliders.indexOf(s);
+	qint64 p = (value * players[n]->mediaStopPosition()) / 100;
+	qDebug() <<"seekPosition:"<< p << value;
+	players[n]->setPosition(p);
+}
+
+void VideoWall::setVolume(int value)
+{
+	QSlider *test = qobject_cast<QSlider *>(sender());
+	nth = volumeSliders.indexOf(test);
+	qDebug() << nth << "\n" << value;
+	AVPlayer *temp = tasks[nth]->video;
+	if (temp) temp->audio()->setVolume(value*1.0 / 100.0);
+	test->setToolTip(QString::number(value));
 }

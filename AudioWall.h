@@ -1,22 +1,21 @@
 #ifndef AudioWALL_H
 #define AudioWALL_H
 
-#include <QtCore/QList>
-#include <QFile>
-#include <QAudioFormat>
-#include <QAudioOutput>
-#include <QComboBox>
-#include <QToolBox>
-
 #include "BaseWidget.h"
-#include "Slider.h"
 #include "AudioTask.h"
 #include "WAVFile.h"
 
 QT_BEGIN_NAMESPACE
+
 class QMenu;
 class QPushButton;
 class QVBoxLayout;
+class QComboBox;
+class QToolBox;
+class QFile;
+class QAudioFormat;
+class QAudioOutput;
+
 QT_END_NAMESPACE
 
 class AudioWall : public BaseWidget
@@ -26,15 +25,18 @@ class AudioWall : public BaseWidget
 public:
 	explicit AudioWall(QWidget *parent = 0);
 	~AudioWall();
+	bool eventFilter(QObject *watched, QEvent *event);
 
 public:
+	QList<AudioTask*> tasks;
+	QList<QAudioOutput*> players;
+	QList<QSlider*> timeSliders;
+	QList<QSlider*> volumeSliders;
+
 	int nth;
 	QVBoxLayout *layout;
-	QWidget *row;
-	QPushButton* addButton;
-
 	BaseWidget *AddView;
-	QList<AudioTask*> tasks;
+	QWidget *row;
 	QString taskName;
 	QString file_path;
 	QFileInfo taskInfo;
@@ -44,11 +46,7 @@ public:
 	qint64 fileSize;
 	QComboBox *m_deviceBox;
 	QAudioDeviceInfo m_device;
-	QIODevice *m_output;
-	QAudioOutput *m_audioOutput;
 	QAudioFormat m_format;
-	QSlider* TimeSlider;
-	QSlider* VolumeSlider;
 
 	QFont font;
 	QPalette pe;
@@ -57,16 +55,16 @@ public:
 signals:
 	void updateAudioList(AudioTask*);
 	void updateAudioState(int);
-	void updateAudioProgress(int);
+	void updateAudioProgress(int, int);
 
-public slots:
+	public slots:
 	void addAudioView();
 	void setSampleRate(const int &);
 	void deviceChanged(const int &);
 	void openLocalFile();
 	void AudioOK();
-	void Remove(); 
-	void updateAudioState(QAudio::State);
+	void Remove();
+	void setAudioState(QAudio::State);
 	void setState();
 	void setSliderPosition();
 	void setPlayerPosition(int);

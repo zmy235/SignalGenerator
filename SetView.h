@@ -12,11 +12,10 @@ class    QPoint;
 class    QHBoxLayout;
 class    QPushButton;
 class    QComboBox;
-class    QDoubleSpinBox;
-class    QRadioButton;
+class    QSpinBox;
+class    QCheckBox;
 class    QSlider;
 
-//继承自QWidget的自定义窗口，单击窗口并移动鼠标可拖动窗口
 class SetView : public BaseWidget
 {
 	Q_OBJECT
@@ -26,16 +25,12 @@ public:
 	~SetView();
 
 private:
-
-	QFont font;
-	QPalette pe;
-	QWidget *BaseView;
-	QRadioButton *VH;
-	QRadioButton *Fram;
-	QDoubleSpinBox *doubleSpinBox;
-	QPushButton *BackButton;//取消
+	QCheckBox *VH;
+	QCheckBox *Fram;
+	QSpinBox *spinBox;
 	QSlider *hSlider;
-
+	QPushButton *BackButton;
+	QPushButton *OKButton;
 
 signals:
 	void updateOpacity(int);
@@ -44,9 +39,8 @@ signals:
 
 	private slots:
 	void setOpacity(int);
-	void setVH(bool);
-	void setFramless(bool);
-	void Back();
+	void setVH(int);
+	void setFramless(int);
 };
 
 #endif // SetView_H

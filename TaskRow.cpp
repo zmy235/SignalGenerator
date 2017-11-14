@@ -1,14 +1,5 @@
 #include "SignalGenerator.h"
 #include "TaskRow.h"
-#include "Task.h"
-
-#include<QWidget>
-#include<QPalette>
-#include<QFont>
-#include<QHBoxLayout>
-#include<QProgressBar>
-#include<QPushButton>
-#include<QLabel>
 
 TaskRow::TaskRow(QWidget *parent, Task *task) : QWidget(parent)
 {
@@ -18,33 +9,37 @@ TaskRow::TaskRow(QWidget *parent, Task *task) : QWidget(parent)
 	setFixedHeight(50);
 	setWindowFlags(Qt::FramelessWindowHint);
 	QPalette palette;
-	palette.setBrush(QPalette::Background, QBrush(QPixmap("./Resources/bg0.png")));
+	palette.setBrush(QPalette::Background, QBrush(QPixmap("./Resources/bg.png")));
 	setPalette(palette);
 	QFont font = QFont("Cambria", 12, 28, false);
 	font.setBold(true);
 	QPalette pe;
-	pe.setColor(QPalette::WindowText, Qt::white);
+	pe.setColor(QPalette::WindowText, Qt::black);
 	setAttribute(Qt::WA_QuitOnClose, false);
 
-	taskTypeLabel = new QLabel();
+	taskTypeLabel = new QLabel(this);
+	taskTypeLabel->setObjectName("taskType");
 	taskTypeLabel->setText(task->taskType);
 	taskTypeLabel->setFixedHeight(45);
 	taskTypeLabel->setFont(font);
 	taskTypeLabel->setPalette(pe);
 
-	taskNameLabel = new QLabel();
+	taskNameLabel = new QLabel(this);
+	taskNameLabel->setObjectName("taskName");
 	taskNameLabel->setText(task->taskName);
 	taskNameLabel->setFixedHeight(45);
 	taskNameLabel->setFont(font);
 	taskNameLabel->setPalette(pe);
 
-	taskFileLabel = new QLabel();
+	taskFileLabel = new QLabel(this);
+	taskFileLabel->setObjectName("taskFile");
 	taskFileLabel->setText(task->taskInfo.absolutePath());
 	taskFileLabel->setFixedHeight(45);
 	taskFileLabel->setFont(font);
 	taskFileLabel->setPalette(pe);
 
-	taskProgressBar = new QProgressBar();
+	taskProgressBar = new QProgressBar(this);
+	taskProgressBar->setObjectName("taskProgress");
 	taskProgressBar->setFixedHeight(25);
 	taskProgressBar->setFont(font);
 	taskProgressBar->setPalette(pe);
@@ -53,14 +48,14 @@ TaskRow::TaskRow(QWidget *parent, Task *task) : QWidget(parent)
 	taskProgressBar->setOrientation(Qt::Horizontal);
 	taskProgressBar->setTextVisible(true);
 
-	taskStateLabel = new QLabel();
+	taskStateLabel = new QLabel(this);
 	taskStateLabel->setObjectName("taskState");
-	taskStateLabel->setText(task->isPlaying ? "Playing" : "Paused");
+	taskStateLabel->setText("Playing");
 	taskStateLabel->setFixedHeight(45);
 	taskStateLabel->setFont(font);
 	taskStateLabel->setPalette(pe);
 
-	infoButton = new QPushButton(QIcon("./Resources/info.png"), tr(""));
+	infoButton = new QPushButton(QIcon("./Resources/info.png"), tr(""), this);
 	infoButton->setFixedSize(QSize(45, 45));
 	infoButton->setIconSize(QSize(45, 45));
 
@@ -79,4 +74,10 @@ TaskRow::TaskRow(QWidget *parent, Task *task) : QWidget(parent)
 
 TaskRow::~TaskRow()
 {
+	delete taskTypeLabel;
+	delete taskNameLabel;
+	delete taskFileLabel;
+	delete taskProgressBar;
+	delete taskStateLabel;
+	delete infoButton;
 }

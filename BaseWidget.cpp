@@ -8,20 +8,17 @@ float BaseWidget::v = 1;
 
 BaseWidget::BaseWidget(QWidget *parent) : QWidget(parent)
 {
+	setWindowOpacity(v);
+	//setWindowFlags(Qt::FramelessWindowHint);
+
+	QPalette palette;
+	palette.setBrush(QPalette::Background, QBrush(QPixmap("./Resources/bg.png")));
+	setPalette(palette);
+	setAttribute(Qt::WA_QuitOnClose, false);
+
 	//可移动区域
 	m_areaMovable = geometry();
 	m_bPressed = false;
-
-	//设置无边框透明
-	setWindowOpacity(v);
-	//setWindowFlags(Qt::FramelessWindowHint);
-	//setWindowFlags(Qt::CustomizeWindowHint);
-
-	QPalette palette;
-	palette.setBrush(QPalette::Background, QBrush(QPixmap("./Resources/background.png")));
-	setPalette(palette);
-
-	setAttribute(Qt::WA_QuitOnClose, false);
 }
 
 void BaseWidget::mousePressEvent(QMouseEvent *e)
@@ -48,7 +45,6 @@ void BaseWidget::mouseReleaseEvent(QMouseEvent *)
 {
 	m_bPressed = false;
 }
-
 
 void BaseWidget::setAreaMovable(const QRect rt)
 {

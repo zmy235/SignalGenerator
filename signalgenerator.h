@@ -3,29 +3,27 @@
 
 #include <QtWidgets/QMainWindow>
 #include "ui_MainWindow.h"
+#include "BaseWidget.h"
 #include "Task.h"
 #include "AudioTask.h"
 #include "VideoTask.h"
+#include "TaskRow.h"
+#include "HistoryView.h"
+#include "SetView.h"
+#include "AboutView.h"
+#include "AudioWall.h"
+#include "VideoWall.h"
 
-class    Action;
+class    QAction;
 class    QToolBar;
 class    QWidget;
-class    BaseWidget;
 class    QRect;
 class    QPoint;
 class    QMouseEvent;
 class    QProgressBar;
-class    QListView;
 class    QPushButton;
 class    QLabel;
 class    QDateTime;
-class    TaskRow;
-class    AddView;
-class    SetView;
-class    AboutView;
-class    HistoryView;
-class    AudioWall;
-class    VideoWall;
 class    QVBoxLayout;
 class    QScrollArea;
 class    QScrollBar;
@@ -64,14 +62,10 @@ private:
 	QAction *about;//关于
 	QAction *shutdown;//关闭
 
-	QVector<Task*> taskList;//全局音频任务列表
-	QList<AudioTask*> AudioTaskList;//全局音频任务列表
-	QList<VideoTask*> VideoTaskList;//全局音频任务列表
+	QVector<Task*> tasks;//全局任务列表
+	QList<AudioTask*> audioTasks;//全局音频任务列表
+	QList<VideoTask*> videoTasks;//全局视频任务列表
 	QList<TaskRow*> rows;//行控件
-
-	int nth;//当前操作位置
-	int audioNth[10];//音频任务对应位置
-	int videoNth[9];//视频任务对应位置
 
 	QRect m_areaMovable;//可移动窗口的区域，鼠标只有在该区域按下才能移动窗口
 	QPoint m_ptPress;//鼠标按下的初始位置
@@ -88,19 +82,21 @@ private:
 	private slots:
 
 	void updateAudioList(AudioTask*);
-	void updateVideoList(VideoTask*);
 	void updateAudioState(int);
+	void updateAudioProgress(int, int);
+
+	void updateVideoList(VideoTask*);
 	void updateVideoState(int);
-	void updateAudioProgress(int);
-	void updateVideoProgress(int);
+	void updateVideoProgress(int, int);
+	
 	void updateVH(bool);
 	void updateOpacity(int);
 	void updateFramless(bool);
 
 	void AudioView();
 	void VideoView();
-	void History();
 	void Setting();
+	void History();
 	void About();
 	void Info();
 };

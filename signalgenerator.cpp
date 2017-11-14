@@ -1,12 +1,4 @@
 #include "SignalGenerator.h"
-#include "BaseWidget.h"
-#include "Task.h"
-#include "TaskRow.h"
-#include "HistoryView.h"
-#include "SetView.h"
-#include "AboutView.h"
-#include "AudioWall.h"
-#include "VideoWall.h"
 
 #include<QDebug>
 #include<QMessageBox>
@@ -17,22 +9,17 @@
 #include<QLayout>
 #include<QScrollBar>
 #include<QScrollArea>
-#include<QDockWidget>
 #include<QVariant> 
 #include<QProgressBar>
-#include<QListView>
 #include<QPushButton>
 #include<QLabel>
 #include<QTimer>
 
-const int kVolumeSliderMax = 100;
-
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 {
 	setWindowTitle(tr("信号发生器"));
+	setWindowFlags(Qt::FramelessWindowHint);
 	ui.setupUi(this);
-
-	//变量初始化
 	Base = ui.widget;
 	vLayout = ui.verticalLayout;
 	vLayout->setAlignment(Qt::AlignTop);
@@ -42,34 +29,43 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 	scrollArea->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 	scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 	scrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+	setMinimumSize(640, 480);
 	m_areaMovable = geometry();
 	m_bPressed = false;
-	setMinimumSize(640, 480);
 	createActions();
 	createToolBars();
 	addToolBar(Qt::LeftToolBarArea, MainToolBar); //TopToolBarArea
 	font = QFont("Cambria", 12, 28, false);
 	font.setBold(true);
-	font_pe.setColor(QPalette::WindowText, Qt::white);
-	palette.setBrush(QPalette::Background, QBrush(QPixmap("./Resources/background.png")));
+	font_pe.setColor(QPalette::WindowText, Qt::black);
+	palette.setBrush(QPalette::Background, QBrush(QPixmap("./Resources/bg.png")));
 	setPalette(palette);
 	//setStyleSheet("QMainWindow { background-color: #AACBEB; }");
 
 	//窗口初始化
-	historyView = new HistoryView();
-	setView = new SetView();
-	aboutView = new AboutView();
 	audioView = new AudioWall();
 	videoView = new VideoWall();
+	setView = new SetView();
+	historyView = new HistoryView();
+	aboutView = new AboutView();
 
-	connect(setView, &SetView::updateVH, this, &MainWindow::updateVH);
-	connect(setView, &SetView::updateOpacity, this, &MainWindow::updateOpacity);
 	connect(audioView, &AudioWall::updateAudioList, this, &MainWindow::updateAudioList);
+	connect(audioView, &AudioWall::updateAudioProgress, this, &MainWindow::updateAudioProgress);
+	connect(audioView, &AudioWall::updateAudioState, this, &MainWindow::updateAudioState);
 	connect(videoView, &VideoWall::updateVideoList, this, &MainWindow::updateVideoList);
+	connect(videoView, &VideoWall::updateVideoProgress, this, &MainWindow::updateVideoProgress);
+	connect(videoView, &VideoWall::updateVideoState, this, &MainWindow::updateVideoState);
+	connect(setView, &SetView::updateVH, this, &MainWindow::updateVH);
+	connect(setView, &SetView::updateFramless, this, &MainWindow::updateFramless);
+	connect(setView, &SetView::updateOpacity, this, &MainWindow::updateOpacity);
 }
 
 MainWindow::~MainWindow()
 {
+	if (!tasks.empty())
+		for each (auto var in tasks)
+			delete var;
+
 	delete historyView;
 	delete setView;
 	delete aboutView;
@@ -81,28 +77,23 @@ void MainWindow::createActions()
 {
 	audio = new QAction(QIcon("./Resources/audio.png"), tr("&audio"), this);
 	audio->setStatusTip(tr("audio"));
-	connect(audio, SIGNAL(triggered()), this, SLOT(AudioView()));
-
 	video = new QAction(QIcon("./Resources/video.png"), tr("&video"), this);
 	video->setStatusTip(tr("video"));
-	connect(video, SIGNAL(triggered()), this, SLOT(VideoView()));
-
 	history = new QAction(QIcon("./Resources/history.png"), tr("&history"), this);
 	history->setStatusTip(tr("history"));
-	connect(history, SIGNAL(triggered()), this, SLOT(History()));
-
 	setting = new QAction(QIcon("./Resources/setting.png"), tr("&setting"), this);
 	setting->setStatusTip(tr("setting"));
-	connect(setting, SIGNAL(triggered()), this, SLOT(Setting()));
-
 	about = new QAction(QIcon("./Resources/about.png"), tr("&about"), this);
 	about->setStatusTip(tr("about"));
-	connect(about, SIGNAL(triggered()), this, SLOT(About()));
-
 	shutdown = new QAction(QIcon("./Resources/shutdown.png"), tr("&shutdown"), this);
 	shutdown->setStatusTip(tr("exit"));
-	connect(shutdown, SIGNAL(triggered()), this, SLOT(close()));
 
+	connect(audio, SIGNAL(triggered()), this, SLOT(AudioView()));
+	connect(video, SIGNAL(triggered()), this, SLOT(VideoView()));
+	connect(history, SIGNAL(triggered()), this, SLOT(History()));
+	connect(setting, SIGNAL(triggered()), this, SLOT(Setting()));
+	connect(about, SIGNAL(triggered()), this, SLOT(About()));
+	connect(shutdown, SIGNAL(triggered()), this, SLOT(close()));
 }
 
 void MainWindow::createToolBars()
@@ -153,7 +144,7 @@ void MainWindow::setAreaMovable(const QRect rt)//设置鼠标按下的区域
 
 void MainWindow::deleteRow(Task *task)
 {
-	int k = taskList.indexOf(task);
+	int k = tasks.indexOf(task);
 	rows[k]->close();
 	rows.removeAt(k);
 }
@@ -168,15 +159,13 @@ void MainWindow::updateAudioList(AudioTask* task)
 	}
 	else
 	{
-		taskList.append(task);
-		AudioTaskList.append(task);
-		audioNth[AudioTaskList.size()] = taskList.size();
+		tasks.append(task);
+		audioTasks.append(task);
 		qDebug()
 			<< "=============================================================\n"
 			<< task->taskType << endl
 			<< task->taskName << endl
 			<< task->taskProgress << endl
-			<< task->isPlaying << endl
 			<< task->isFinished << endl
 			<< "=============================================================";
 
@@ -193,85 +182,66 @@ void MainWindow::updateAudioList(AudioTask* task)
 
 void MainWindow::updateVideoList(VideoTask* task)
 {
-	taskList.append(task);
-	VideoTaskList.append(task);
-	videoNth[VideoTaskList.size()] = taskList.size();
+	if (task->isFinished)
+	{
+		deleteRow(task);
+	}
+	else
+	{
+		tasks.append(task);
+		videoTasks.append(task);
 
-	qDebug()
-		<< "============================================================="
-		<< task->taskType << endl
-		<< task->taskName << endl
-		<< task->taskProgress << endl
-		<< task->isPlaying << endl
-		<< task->isFinished << endl
-		<< "=============================================================";
+		qDebug()
+			<< "============================================================="
+			<< task->taskType << endl
+			<< task->taskName << endl
+			<< task->taskProgress << endl
+			<< task->isFinished << endl
+			<< "=============================================================";
 
-	TaskRow *row = new TaskRow(Base, task);
-	row->setFixedHeight(50);
-	row->setWindowFlags(Qt::FramelessWindowHint);
-	row->setPalette(palette);
-	vLayout->addWidget(row);
-	rows.append(row);
-	row->show();
-	connect(row->infoButton, SIGNAL(clicked()), this, SLOT(Info()));
+		TaskRow *row = new TaskRow(Base, task);
+		row->setFixedHeight(50);
+		row->setWindowFlags(Qt::FramelessWindowHint);
+		row->setPalette(palette);
+		vLayout->addWidget(row);
+		rows.append(row);
+		row->show();
+		connect(row->infoButton, SIGNAL(clicked()), this, SLOT(Info()));
+	}
 }
 
 void MainWindow::updateAudioState(int n)
 {
-	nth = audioNth[n];
-	QLabel *test = rows.at(nth)->findChild<QLabel *>("state");
-
-	if (AudioTaskList.at(n)->isPlaying)
-	{
-		test->setText("Paused");
-	}
-	else
-	{
-		test->setText("Playing");
-	}
+	int nth = tasks.indexOf(audioTasks[n]);
+	QLabel *test = rows.at(nth)->findChild<QLabel *>("taskState");
+	QAudio::State state = audioTasks[n]->getState();
+	if (state == QAudio::ActiveState) test->setText("Playing");
+	else if (state == QAudio::SuspendedState) test->setText("Paused");
+	else test->setText("Stoped");
 }
 
 void MainWindow::updateVideoState(int n)
 {
-	nth = videoNth[n];
-	QLabel *test = rows.at(nth)->findChild<QLabel *>("state");
-	if (VideoTaskList.at(n)->isPlaying)
-	{
-		test->setText("Paused");
-	}
-	else
-	{
-		test->setText("Playing");
-	}
+	int nth = tasks.indexOf(videoTasks[n]);
+	QLabel *test = rows.at(nth)->findChild<QLabel *>("taskState");
+	AVPlayer::State state = videoTasks[n]->getState();
+	if (state == AVPlayer::PlayingState) test->setText("Playing");
+	else if (state == AVPlayer::PausedState)  test->setText("Paused");
+	else test->setText("Stoped");
 }
 
-void MainWindow::updateAudioProgress(int n)
+void MainWindow::updateAudioProgress(int n, int value)
 {
-	nth = audioNth[n];
-	QLabel *test = rows.at(nth)->findChild<QLabel *>("state");
-
-	if (AudioTaskList.at(n)->isPlaying)
-	{
-		test->setText("Paused");
-	}
-	else
-	{
-		test->setText("Playing");
-	}
+	int nth = tasks.indexOf(audioTasks[n]);
+	QProgressBar *test = rows.at(nth)->findChild<QProgressBar *>("taskProgress");
+	test->setValue(value);
 }
 
-void MainWindow::updateVideoProgress(int n)
+void MainWindow::updateVideoProgress(int n, int value)
 {
-	nth = videoNth[n];
-	QLabel *test = rows.at(nth)->findChild<QLabel *>("state");
-	if (VideoTaskList.at(n)->isPlaying)
-	{
-		test->setText("Paused");
-	}
-	else
-	{
-		test->setText("Playing");
-	}
+	int nth = tasks.indexOf(videoTasks[n]);
+	QProgressBar *test = rows.at(nth)->findChild<QProgressBar *>("taskProgress");
+	test->setValue(value);
 }
 
 void MainWindow::updateVH(bool value)
@@ -282,16 +252,32 @@ void MainWindow::updateVH(bool value)
 
 void MainWindow::updateOpacity(int value)
 {
-	this->setWindowOpacity((100.0 - value) / 100.0);
-	this->historyView->setWindowOpacity((100.0 - value) / 100.0);
-	this->aboutView->setWindowOpacity((100.0 - value) / 100.0);
-	this->audioView->setWindowOpacity((100.0 - value) / 100.0);
+	setWindowOpacity((100.0 - value) / 100.0);
+	audioView->setWindowOpacity((100.0 - value) / 100.0);
+	videoView->setWindowOpacity((100.0 - value) / 100.0);
+	historyView->setWindowOpacity((100.0 - value) / 100.0);
+	aboutView->setWindowOpacity((100.0 - value) / 100.0);
 }
 
 void MainWindow::updateFramless(bool value)
 {
-	setWindowFlags(Qt::FramelessWindowHint);
-	setWindowFlags(Qt::CustomizeWindowHint);
+	if (value)
+	{
+		setWindowFlags(Qt::FramelessWindowHint);
+		audioView->setWindowFlags(Qt::FramelessWindowHint);
+		videoView->setWindowFlags(Qt::FramelessWindowHint);
+		historyView->setWindowFlags(Qt::FramelessWindowHint);
+		aboutView->setWindowFlags(Qt::FramelessWindowHint);
+	}
+	else
+	{
+		setWindowFlags(Qt::WindowCloseButtonHint);
+		audioView->setWindowFlags(Qt::WindowCloseButtonHint);
+		videoView->setWindowFlags(Qt::WindowCloseButtonHint);
+		historyView->setWindowFlags(Qt::WindowCloseButtonHint);
+		aboutView->setWindowFlags(Qt::WindowCloseButtonHint);
+	}
+	show();
 }
 
 //菜单栏点击操作
@@ -327,13 +313,13 @@ void MainWindow::Info()
 {
 	QPushButton *test = qobject_cast<QPushButton *>(sender());
 	QWidget *w = test->parentWidget();
-	nth = w->y() / 50;
+	int nth = w->y() / 50;
 	QMessageBox::about(0, tr("Help"),
 		QString::fromLocal8Bit("文件绝对路径:")
-		+ taskList.at(nth)->taskInfo.absoluteFilePath()
+		+ tasks.at(nth)->taskInfo.absoluteFilePath()
 		+ QString::fromLocal8Bit("\n文件大小：")
-		+ QString::number(taskList.at(nth)->taskInfo.size())
+		+ QString::number(tasks.at(nth)->taskInfo.size())
 		+ QString::fromLocal8Bit("\n信号：")
-		+ taskList.at(nth)->taskName
+		+ tasks.at(nth)->taskName
 		+ QString::fromLocal8Bit("\n"));
 }
