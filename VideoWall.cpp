@@ -83,22 +83,24 @@ VideoWall::VideoWall(QWidget *parent) : QWidget(parent)
 			timeSlider->setOrientation(Qt::Horizontal);
 			timeSlider->setMinimum(0);
 			timeSlider->setMaximum(100);
+			timeSlider->setFixedHeight(15);
 			timeSlider->setValue(0);
 			timeSlider->setEnabled(true);
 			timeSliders.append(timeSlider);
 			QSlider* VolumeSlider = new QSlider(rendererWidget);
 			VolumeSlider->setTracking(true);//实时改变
-			VolumeSlider->setOrientation(Qt::Vertical);
+			VolumeSlider->setOrientation(Qt::Horizontal);
 			VolumeSlider->setMinimum(0);
 			VolumeSlider->setMaximum(100);
-			VolumeSlider->setFixedHeight(50);
+			VolumeSlider->setFixedHeight(15);
 			VolumeSlider->setValue(0);
 			VolumeSlider->setEnabled(true);
 			volumeSliders.append(VolumeSlider);
 
 			QHBoxLayout *hlayout = new QHBoxLayout();
-			hlayout->addWidget(timeSlider,5);
-			hlayout->addWidget(VolumeSlider,1);
+			hlayout->setSpacing(20);
+			hlayout->addWidget(timeSlider, 5);
+			hlayout->addWidget(VolumeSlider, 1);
 			layout->addLayout(hlayout);
 
 			connect(timeSlider, SIGNAL(sliderMoved(int)), this, SLOT(setPlayerPosition(int)));
@@ -466,7 +468,7 @@ void VideoWall::setPlayerPosition(int value)
 	QSlider *s = qobject_cast<QSlider *>(sender());
 	int n = timeSliders.indexOf(s);
 	qint64 p = (value * players[n]->mediaStopPosition()) / 100;
-	qDebug() <<"seekPosition:"<< p << value;
+	qDebug() << "seekPosition:" << p << value;
 	players[n]->setPosition(p);
 }
 
@@ -475,7 +477,10 @@ void VideoWall::setVolume(int value)
 	QSlider *test = qobject_cast<QSlider *>(sender());
 	nth = volumeSliders.indexOf(test);
 	qDebug() << nth << "\n" << value;
-	AVPlayer *temp = tasks[nth]->video;
-	if (temp) temp->audio()->setVolume(value*1.0 / 100.0);
+	if (taskMap[nth])
+	{
+		AVPlayer *temp = tasks[nth]->video;
+		if (temp) temp->audio()->setVolume(value*1.0 / 100.0);
+	}
 	test->setToolTip(QString::number(value));
 }

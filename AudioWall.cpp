@@ -43,6 +43,28 @@ AudioWall::AudioWall(QWidget *parent) : BaseWidget(parent)
 
 AudioWall::~AudioWall()
 {
+	for each (auto player in players)
+	{
+		delete player;
+	}
+	for each (auto timeSlider in timeSliders)
+	{
+		delete timeSlider;
+	}
+	for each (auto volumeSlider in volumeSliders)
+	{
+		delete volumeSlider;
+	}
+	for each (auto task in tasks)
+	{
+		delete task;
+	}
+	delete layout;
+	delete AddView;
+	delete row;
+	delete sampleRateComboBox;
+	delete inputFile;
+	delete m_deviceBox;
 }
 
 bool AudioWall::eventFilter(QObject *watched, QEvent *event)
@@ -53,6 +75,7 @@ bool AudioWall::eventFilter(QObject *watched, QEvent *event)
 		QMenu *menu = new QMenu();
 		menu->addAction(tr("Add Task"), this, SLOT(addAudioView()));
 		menu->addAction(tr("Start All"), this, SLOT(playAll()));
+		menu->addAction(tr("Pause All"), this, SLOT(pauseAll()));
 		menu->addAction(tr("Exit"), this, SLOT(close()));
 		menu->popup(e->globalPos());
 		menu->exec();
@@ -123,6 +146,22 @@ void AudioWall::addAudioView()
 	connect(addOKButton, SIGNAL(clicked()), this, SLOT(AudioOK()));
 
 	AddView->show();
+}
+
+void AudioWall::playAll()
+{
+	for each (auto task in tasks)
+	{
+		task->start();
+	}
+}
+
+void AudioWall::pauseAll()
+{
+	for each (auto task in tasks)
+	{
+		task->pause();
+	}
 }
 
 void AudioWall::setSampleRate(const int &index)
@@ -277,7 +316,7 @@ void AudioWall::setState()
 	QPushButton *test = qobject_cast<QPushButton *>(sender());
 	QWidget *w = test->parentWidget();
 	nth = w->y() / 50;
-	if (tasks[nth]->getState()==QAudio::ActiveState)
+	if (tasks[nth]->getState() == QAudio::ActiveState)
 	{
 		tasks[nth]->stop();
 		test->setIcon(QIcon("./Resources/start.png"));

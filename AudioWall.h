@@ -58,7 +58,9 @@ signals:
 	void updateAudioProgress(int, int);
 
 	public slots:
-	void addAudioView();
+	void addAudioView(); 
+	void playAll();
+	void pauseAll();
 	void setSampleRate(const int &);
 	void deviceChanged(const int &);
 	void openLocalFile();
