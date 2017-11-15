@@ -123,31 +123,14 @@ VideoWall::VideoWall(QWidget *parent) : QWidget(parent)
 
 VideoWall::~VideoWall()
 {
-	if (menu)
-	{
-		delete menu;
-		menu = 0;
-	}
+	if (menu)delete menu;
+	foreach(AVPlayer *p, players) delete p;
+	foreach(QSlider *t, timeSliders) delete t;
+	foreach(QSlider *v, volumeSliders) delete v;
+	foreach(QWidget *r, rendererWidgets) delete r;
 	if (!tasks.isEmpty())
 	{
-		foreach(VideoTask *task, tasks)
-		{
-			task->video->stop();
-			QList<VideoRenderer*> mRenderers = task->video->videoOutputs();
-			foreach(VideoRenderer* renderer, mRenderers)
-			{
-				task->video->removeVideoRenderer(renderer);
-				if (renderer->widget())
-				{
-					renderer->widget()->close();
-					delete renderer;
-				}
-			}
-			delete task->video;
-			delete task->volumeSlider;
-			delete task->timeSlider;
-		}
-		tasks.clear();
+		foreach(VideoTask *task, tasks) delete task;
 		taskMap.clear();
 	}
 }
@@ -439,7 +422,8 @@ void VideoWall::VedioOK()
 {
 	VideoTask* task = new VideoTask(tr("Video"), taskName, taskInfo, players[nth]);
 	task->taskTime = QDateTime::currentDateTime();
-	task->video = players[nth];
+	task->timeSlider = timeSliders[nth];
+	task->volumeSlider = volumeSliders[nth];
 	emit updateVideoList(task);
 	tasks.append(task);
 	taskMap[nth] = task;

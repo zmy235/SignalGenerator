@@ -62,10 +62,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 
 MainWindow::~MainWindow()
 {
-	if (!tasks.empty())
-		for each (auto var in tasks)
-			delete var;
-
 	delete historyView;
 	delete setView;
 	delete aboutView;

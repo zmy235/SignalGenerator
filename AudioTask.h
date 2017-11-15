@@ -5,6 +5,7 @@
 #include "WAVFile.h"
 #include <QAudioOutput>
 #include <QSlider>
+#include <QTextStream>
 
 class AudioTask : public Task
 {
@@ -26,6 +27,18 @@ public:
 	void start(){ if (getState() != QAudio::ActiveState) audio->start(); }
 	void pause() { if (getState() == QAudio::ActiveState) audio->blockSignals(true); }
 	void stop() { if (getState() != QAudio::StoppedState) audio->stop(); }
+	void record() 
+	{
+		QFile file("task.log");
+		if (!file.open(QIODevice::ReadWrite | QIODevice::Append)) return;
+		QTextStream in(&file);
+		QString str = QString::fromLocal8Bit("任务创建时间: ") + taskTime.toString()
+			+QString::fromLocal8Bit("\n文件绝对路径: ") + taskInfo.absoluteFilePath()
+			+ QString::fromLocal8Bit("\n文件大小：") + QString::number(taskInfo.size())
+			+ QString::fromLocal8Bit("\n信号：") + taskName;
+		in << str << "\n";
+		file.close();
+	}
 	void setState()
 	{
 		if (getState() == QAudio::ActiveState)audio->stop();
@@ -33,6 +46,7 @@ public:
 	}
 
 public:
+
 	QString sampleRate;
 	qint64 size;
 	WAVFile *file;

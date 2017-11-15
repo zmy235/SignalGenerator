@@ -26,6 +26,14 @@
 #include <QUrl>
 #include <QWidget>
 
+//extern "C"
+//{
+//#include <libavcodec\avcodec.h>
+//#include <libavformat\avformat.h>
+//#include <libswscale\swscale.h>
+//#include <libswresample\swresample.h>
+//}
+
 AudioWall::AudioWall(QWidget *parent) : BaseWidget(parent)
 {
 	setWindowTitle(QString::fromLocal8Bit("音频输出窗口"));
@@ -43,28 +51,7 @@ AudioWall::AudioWall(QWidget *parent) : BaseWidget(parent)
 
 AudioWall::~AudioWall()
 {
-	for each (auto player in players)
-	{
-		delete player;
-	}
-	for each (auto timeSlider in timeSliders)
-	{
-		delete timeSlider;
-	}
-	for each (auto volumeSlider in volumeSliders)
-	{
-		delete volumeSlider;
-	}
-	for each (auto task in tasks)
-	{
-		delete task;
-	}
-	delete layout;
-	delete AddView;
-	delete row;
-	delete sampleRateComboBox;
-	delete inputFile;
-	delete m_deviceBox;
+	for each (auto task in tasks) delete task;
 }
 
 bool AudioWall::eventFilter(QObject *watched, QEvent *event)
@@ -215,9 +202,9 @@ void AudioWall::openLocalFile()
 
 void AudioWall::AudioOK()
 {
-	row = new QWidget(this);
+	QWidget *row = new QWidget(this);
 	row->setFixedHeight(50);
-	row->setWindowFlags(Qt::FramelessWindowHint);
+	rows.append(row);
 	layout->addWidget(row);
 
 	QHBoxLayout *hLayout = new QHBoxLayout(row);
@@ -241,18 +228,21 @@ void AudioWall::AudioOK()
 	TimeSlider->setTickInterval(5);
 	TimeSlider->setMinimum(0);
 	TimeSlider->setMaximum(100);
+	TimeSlider->setValue(0);
 	timeSliders.append(TimeSlider);
 
 	QSlider *VolumeSlider = new QSlider(row);
-	VolumeSlider->setTracking(true);//实时改变
 	VolumeSlider->setOrientation(Qt::Vertical);
+	VolumeSlider->setTracking(true);//实时改变
 	VolumeSlider->setMinimum(0);
 	VolumeSlider->setMaximum(100);
+	VolumeSlider->setValue(100);
 	volumeSliders.append(VolumeSlider);
 
-	QPushButton* state = new QPushButton(QIcon("./Resources/start.png"), tr(""), row);
-	state->setFixedSize(QSize(45, 45));
-	state->setIconSize(QSize(45, 45));
+	QPushButton* start = new QPushButton(QIcon("./Resources/start.png"), tr(""), row);
+	start->setFixedSize(QSize(45, 45));
+	start->setIconSize(QSize(45, 45));
+
 	QPushButton* remove = new QPushButton(QIcon("./Resources/remove.png"), tr(""), row);
 	remove->setFixedSize(QSize(45, 45));
 	remove->setIconSize(QSize(45, 45));
@@ -261,18 +251,17 @@ void AudioWall::AudioOK()
 	hLayout->addWidget(fileNameLable, 4);
 	hLayout->addWidget(TimeSlider, 4);
 	hLayout->addWidget(VolumeSlider, 1);
-	hLayout->addWidget(state, 1);
+	hLayout->addWidget(start, 1);
 	hLayout->addWidget(remove, 1);
 
+	WAVFile *inputFile = new WAVFile();
+	inputFile->open(file_path, QIODevice::ReadOnly);
 	m_format.setSampleRate(sampleRate.toInt());//设置采样率  
 	m_format.setChannelCount(1);//设置通道数  
 	m_format.setSampleSize(16);//设置采样大小，一般为8位或16位  
 	m_format.setCodec("audio/pcm");//设置编码方式  
 	m_format.setByteOrder(QAudioFormat::LittleEndian);//设置字节序  
 	m_format.setSampleType(QAudioFormat::UnSignedInt);//设置样本数据类型
-
-	inputFile = new WAVFile;
-	inputFile->open(file_path, QIODevice::ReadOnly);
 	m_format = m_device.preferredFormat();
 	QAudioOutput *m_audioOutput = new QAudioOutput(m_device, m_format);
 	m_audioOutput->setNotifyInterval(1000);
@@ -302,7 +291,7 @@ void AudioWall::AudioOK()
 	connect(m_audioOutput, SIGNAL(notify()), this, SLOT(setSliderPosition()));
 	connect(TimeSlider, SIGNAL(sliderMoved(int)), this, SLOT(setPlayerPosition(int)));
 	connect(VolumeSlider, SIGNAL(valueChanged(int)), this, SLOT(setVolume(int)));
-	connect(state, SIGNAL(clicked()), this, SLOT(setState()));
+	connect(start, SIGNAL(clicked()), this, SLOT(setState()));
 	connect(remove, SIGNAL(clicked()), this, SLOT(Remove()));
 }
 
@@ -342,7 +331,13 @@ void AudioWall::Remove()
 	}
 	w->close();
 	emit updateAudioList(tasks[nth]);
+	tasks[nth]->record();
 	tasks.removeAt(nth);
+	players.removeAt(nth);
+	timeSliders.removeAt(nth);
+	volumeSliders.removeAt(nth);
+	rows.removeAt(nth);
+
 }
 
 void AudioWall::setPlayerPosition(int value)

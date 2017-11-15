@@ -32,11 +32,11 @@ public:
 	QList<QAudioOutput*> players;
 	QList<QSlider*> timeSliders;
 	QList<QSlider*> volumeSliders;
+	QList<QWidget*> rows;
 
 	int nth;
 	QVBoxLayout *layout;
 	BaseWidget *AddView;
-	QWidget *row;
 	QString taskName;
 	QString file_path;
 	QFileInfo taskInfo;

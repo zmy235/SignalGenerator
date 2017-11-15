@@ -22,7 +22,8 @@ public:
 	~HistoryView();
 
 private:
-	QTextEdit *content;
+	QTextEdit *content; 
+	QPushButton *RefreshButton;
 	QPushButton *BackButton;
 	QPushButton *SaveButton;
 

@@ -39,7 +39,6 @@ private:
 	QMap<int, VideoTask*> taskMap;
 	QList<VideoTask*> tasks;
 	QList<AVPlayer*> players;
-	VideoPreviewWidget *m_preview;
 	QList<QWidget*> rendererWidgets;
 	QList<QSlider*> timeSliders;
 	QList<QSlider*> volumeSliders;

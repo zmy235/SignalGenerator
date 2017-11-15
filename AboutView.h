@@ -21,11 +21,6 @@ public:
 	~AboutView();
 
 private:
-
-	QFont font;
-	QPalette pe;
-	QWidget *BaseView;
-	QHBoxLayout * layout;
 	QLabel *text;
 	QPushButton *BackButton;//È¡Ïû
 };

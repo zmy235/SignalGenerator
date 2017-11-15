@@ -23,26 +23,29 @@ AboutView::AboutView(QWidget *parent) : BaseWidget(parent)
 {
 	setWindowTitle(tr("AboutView"));
 
-	//Font
-	font = QFont("Cambria", 12, 26, false);
+	QFont font = QFont("Cambria", 12, 26, false);
 	font.setBold(true);
-
-	//Color
+	QPalette pe;
 	pe.setColor(QPalette::WindowText, Qt::white);
-
-	//Back Button
-	BackButton = new QPushButton(QIcon("./Resources/cancel.png"), tr(""), this);
-	BackButton->setStatusTip(tr("·µ»Ø"));
-	BackButton->setFixedSize(QSize(45, 45));
-	BackButton->setIconSize(QSize(45, 45));
-	BackButton->setGeometry(QRect(0, 0, 45, 45));
-	connect(BackButton, SIGNAL(clicked()), this, SLOT(close()));
 
 	text = new QLabel(this);
 	text->setText(tr("This Program is Protected By Chinese Law.\n(C) 2016 NWPU CV&VR Lab.\n2016."));
+	text->setContentsMargins(50,50,50,100);
 	text->setFont(font);
 	text->setPalette(pe);
-	text->setGeometry(QRect(100, 60,360,200));
+
+	BackButton = new QPushButton(QIcon("./Resources/ok.png"), tr(""), this);
+	BackButton->setStatusTip(tr("·µ»Ø"));
+	BackButton->setFixedSize(QSize(45, 45));
+	BackButton->setIconSize(QSize(45, 45));
+
+	QVBoxLayout * layout = new QVBoxLayout(this);
+	layout->setSpacing(50);
+	layout->setAlignment(Qt::AlignCenter);
+	layout->addWidget(text);
+	layout->addWidget(BackButton);
+
+	connect(BackButton, SIGNAL(clicked()), this, SLOT(close()));
 }
 
 AboutView::~AboutView()
