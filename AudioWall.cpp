@@ -44,7 +44,7 @@ AudioWall::AudioWall(QWidget *parent) : BaseWidget(parent)
 	layout->setMargin(5);
 	font = QFont("Cambria", 12, 28, false);
 	font.setBold(true);
-	font_pe.setColor(QPalette::WindowText, Qt::black);
+	font_pe.setColor(QPalette::WindowText, Qt::white);
 	pe.setColor(QPalette::ButtonText, Qt::white);
 	installEventFilter(this);
 }
@@ -331,7 +331,7 @@ void AudioWall::Remove()
 	}
 	w->close();
 	emit updateAudioList(tasks[nth]);
-	tasks[nth]->record();
+	delete tasks[nth];
 	tasks.removeAt(nth);
 	players.removeAt(nth);
 	timeSliders.removeAt(nth);

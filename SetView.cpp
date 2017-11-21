@@ -21,7 +21,7 @@
 
 SetView::SetView(QWidget *parent) : BaseWidget(parent)
 {
-	setWindowTitle(tr("Setting"));
+	setWindowTitle(QString::fromLocal8Bit("…Ë÷√"));
 	setFixedSize(640, 480);
 
 	QFont font;

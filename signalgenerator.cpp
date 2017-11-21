@@ -17,9 +17,9 @@
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 {
-	setWindowTitle(tr("信号发生器"));
-	setWindowFlags(Qt::FramelessWindowHint);
 	ui.setupUi(this);
+	setWindowTitle(QString::fromLocal8Bit("信号发生器"));
+	setWindowFlags(Qt::FramelessWindowHint);
 	Base = ui.widget;
 	vLayout = ui.verticalLayout;
 	vLayout->setAlignment(Qt::AlignTop);
@@ -37,7 +37,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 	addToolBar(Qt::LeftToolBarArea, MainToolBar); //TopToolBarArea
 	font = QFont("Cambria", 12, 28, false);
 	font.setBold(true);
-	font_pe.setColor(QPalette::WindowText, Qt::black);
+	font_pe.setColor(QPalette::WindowText, Qt::white);
 	palette.setBrush(QPalette::Background, QBrush(QPixmap("./Resources/bg.png")));
 	setPalette(palette);
 	//setStyleSheet("QMainWindow { background-color: #AACBEB; }");

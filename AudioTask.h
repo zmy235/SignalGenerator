@@ -19,14 +19,15 @@ public:
 	}
 	~AudioTask()
 	{
+		record();
 		delete audio;
 		delete file;
 		delete timeSlider;
 	}
 	QAudio::State getState(){ return audio ? audio->state() : QAudio::StoppedState; }
 	void start(){ if (getState() != QAudio::ActiveState) audio->start(); }
-	void pause() { if (getState() == QAudio::ActiveState) audio->blockSignals(true); }
-	void stop() { if (getState() != QAudio::StoppedState) audio->stop(); }
+	void pause() { if (getState() == QAudio::ActiveState) audio->stop(); }
+	void stop() { if (getState() != QAudio::StoppedState) audio->blockSignals(true); }
 	void record() 
 	{
 		QFile file("task.log");

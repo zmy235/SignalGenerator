@@ -2,7 +2,6 @@
 #define VIDEOTASK_H
 
 #include "Task.h"
-#include "Slider.h"
 #include <QtAV/AVPlayer.h>
 #include <QSlider>
 #include <QFileInfo>
@@ -24,7 +23,7 @@ public:
 	}
 	~VideoTask()
 	{
-
+		record();
 	}
 	AVPlayer::State getState(){ return video ? video->state() : AVPlayer::StoppedState; }
 	qint64 size(){ return taskInfo.size(); }

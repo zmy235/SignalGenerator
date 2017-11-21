@@ -4,7 +4,7 @@
 TaskRow::TaskRow(QWidget *parent, Task *task) : QWidget(parent)
 {
 	QHBoxLayout *layout = new QHBoxLayout();
-	layout->setSpacing(5);
+	layout->setSpacing(1);
 	setLayout(layout);
 	setFixedHeight(50);
 	setWindowFlags(Qt::FramelessWindowHint);
@@ -14,7 +14,7 @@ TaskRow::TaskRow(QWidget *parent, Task *task) : QWidget(parent)
 	QFont font = QFont("Cambria", 12, 28, false);
 	font.setBold(true);
 	QPalette pe;
-	pe.setColor(QPalette::WindowText, Qt::black);
+	pe.setColor(QPalette::WindowText, Qt::white);
 	setAttribute(Qt::WA_QuitOnClose, false);
 
 	taskTypeLabel = new QLabel(this);
@@ -33,8 +33,9 @@ TaskRow::TaskRow(QWidget *parent, Task *task) : QWidget(parent)
 
 	taskFileLabel = new QLabel(this);
 	taskFileLabel->setObjectName("taskFile");
-	taskFileLabel->setText(task->taskInfo.absolutePath());
+	taskFileLabel->setText(task->taskInfo.completeBaseName());
 	taskFileLabel->setFixedHeight(45);
+	taskFileLabel->setMaximumWidth(150);
 	taskFileLabel->setFont(font);
 	taskFileLabel->setPalette(pe);
 
@@ -61,14 +62,16 @@ TaskRow::TaskRow(QWidget *parent, Task *task) : QWidget(parent)
 
 	layout->addWidget(taskTypeLabel);
 	layout->addWidget(taskNameLabel);
+	layout->addWidget(taskFileLabel);
 	layout->addWidget(taskProgressBar);
 	layout->addWidget(taskStateLabel);
 	layout->addWidget(infoButton);
 
-	layout->setStretchFactor(taskTypeLabel, 3);
-	layout->setStretchFactor(taskNameLabel, 4);
-	layout->setStretchFactor(taskProgressBar, 6);
-	layout->setStretchFactor(taskStateLabel, 3);
+	layout->setStretchFactor(taskTypeLabel, 1);
+	layout->setStretchFactor(taskNameLabel, 1);
+	layout->setStretchFactor(taskFileLabel, 4);
+	layout->setStretchFactor(taskProgressBar, 5);
+	layout->setStretchFactor(taskStateLabel, 1);
 	layout->setStretchFactor(infoButton, 1);
 }
 

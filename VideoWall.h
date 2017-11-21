@@ -2,7 +2,6 @@
 #define VIDEOWALL_H
 
 #include "BaseWidget.h"
-#include "Slider.h"
 #include "VideoTask.h"
 #include <QComboBox>
 #include <QtAVWidgets> 
@@ -11,6 +10,7 @@ using namespace QtAV;
 
 QT_BEGIN_NAMESPACE
 class QMenu;
+class QLabel;
 QT_END_NAMESPACE
 
 class VideoWall : public QWidget
@@ -32,6 +32,7 @@ private:
 	QFont font;
 	QPalette pe;
 	BaseWidget *AddView;
+	QLabel *FrameNumView;
 	QComboBox *VedioComboBox;
 	QMenu *menu;
 
@@ -53,11 +54,13 @@ signals:
 
 	public slots:
 	void playAll();
-	void stopAll();
+	void stopAll(); 
 	void help();
 	void addVideoView();
 	void setVideoType(const int &);
 	void openLocalFile();
+	void addFramNum(int); 
+	void framCount(int);
 	void VedioOK();
 
 	void setSliderPosition(qint64);

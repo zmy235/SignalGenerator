@@ -1,9 +1,11 @@
 #include "VideoWall.h"
+#include "BaseWidget.h"
 
 #include <Windows.h>
 #include <QApplication>
 #include <QDesktopWidget>
 #include <QComboBox>
+#include <QCheckBox>
 #include <QDebug>
 #include <QEvent>
 #include <QFileDialog>
@@ -24,6 +26,7 @@
 #include <QUrl>
 #include <QWidget>
 #include <QToolTip>
+#include <QLabel>
 #include <QtAV/AudioOutput.h>
 #include <QtAVWidgets/QtAVWidgets>
 
@@ -44,7 +47,7 @@ VideoWall::VideoWall(QWidget *parent) : QWidget(parent)
 	setMinimumSize(640, 480);
 	font = QFont("Times", 16, 32, false);
 	font.setBold(true);
-	pe.setColor(QPalette::ButtonText, Qt::white);
+	pe.setColor(QPalette::WindowText, Qt::white);
 
 	installEventFilter(this);
 	v = VideoRendererId_OpenGLWidget;//视频渲染器的ID，即使用的解码器来源
@@ -70,8 +73,10 @@ VideoWall::VideoWall(QWidget *parent) : QWidget(parent)
 			rendererWidget->resize(w, h);
 			rendererWidget->setAcceptDrops(true);
 			rendererWidget->move(j*w, i*h);
+
 			QVBoxLayout *layout = new QVBoxLayout(rendererWidget);
 			layout->setAlignment(Qt::AlignBottom);
+
 			((QGridLayout*) this->layout())->addWidget(rendererWidget, i, j);//将每个播放器渲染器按格子布局放入
 			rendererWidgets.append(rendererWidget);
 
@@ -87,6 +92,7 @@ VideoWall::VideoWall(QWidget *parent) : QWidget(parent)
 			timeSlider->setValue(0);
 			timeSlider->setEnabled(true);
 			timeSliders.append(timeSlider);
+
 			QSlider* VolumeSlider = new QSlider(rendererWidget);
 			VolumeSlider->setTracking(true);//实时改变
 			VolumeSlider->setOrientation(Qt::Horizontal);
@@ -106,6 +112,7 @@ VideoWall::VideoWall(QWidget *parent) : QWidget(parent)
 			connect(timeSlider, SIGNAL(sliderMoved(int)), this, SLOT(setPlayerPosition(int)));
 			connect(VolumeSlider, SIGNAL(sliderMoved(int)), this, SLOT(setVolume(int)));
 			connect(player, SIGNAL(positionChanged(qint64)), this, SLOT(setSliderPosition(qint64)));
+			connect(player, SIGNAL(frameChanged(int)), this, SLOT(framCount(int)));
 		}
 	}
 
@@ -130,7 +137,7 @@ VideoWall::~VideoWall()
 	foreach(QWidget *r, rendererWidgets) delete r;
 	if (!tasks.isEmpty())
 	{
-		foreach(VideoTask *task, tasks) delete task;
+		foreach(VideoTask *task, tasks) { task->record(); delete task; }
 		taskMap.clear();
 	}
 }
@@ -161,15 +168,6 @@ void VideoWall::playAll()
 	foreach(VideoTask *task, tasks)
 	{
 		task->video->play();
-	}
-}
-
-void VideoWall::stopAll()
-{
-	if (tasks.isEmpty()) return;
-	foreach(VideoTask *task, tasks)
-	{
-		task->video->stop();
 	}
 }
 
@@ -381,34 +379,54 @@ void VideoWall::addVideoView()
 	VedioComboBox->setFont(font);
 	VedioComboBox->setPalette(pe);
 	VedioComboBox->setStyleSheet("QComboBox { background-color: #454545; }");
-	QPushButton *VedioFileButton;
-	VedioFileButton = new QPushButton(QIcon("./Resources/file.png"), tr(""), AddView);
+
+	QPushButton *VedioFileButton = new QPushButton(QIcon("./Resources/file.png"), tr(""), AddView);
+	VedioFileButton->setObjectName(tr("VedioFileButton"));
 	VedioFileButton->setStatusTip(tr("Choose a File"));
 	VedioFileButton->setFixedSize(QSize(45, 45));
 	VedioFileButton->setIconSize(QSize(45, 45));
-	QPushButton *BackButton;//取消
-	BackButton = new QPushButton(QIcon("./Resources/cancel.png"), tr(""), AddView);
+
+	QCheckBox *AddFramNum = new QCheckBox(AddView);
+	AddFramNum->setObjectName(tr("AddFramNum"));
+	AddFramNum->setText(QString::fromLocal8Bit("添加帧号"));
+	AddFramNum->setFont(font);
+	AddFramNum->setPalette(pe);
+	AddFramNum->setVisible(false);
+
+	QPushButton *BackButton = new QPushButton(QIcon("./Resources/cancel.png"), tr(""), AddView);
+	BackButton->setObjectName(tr("BackButton"));
 	BackButton->setStatusTip(tr("返回"));
 	BackButton->setFixedSize(QSize(45, 45));
 	BackButton->setIconSize(QSize(45, 45));
-	QPushButton *VedioOKButton;//添加
-	VedioOKButton = new QPushButton(QIcon("./Resources/ok.png"), tr(""), AddView);
+
+	QPushButton *VedioOKButton = new QPushButton(QIcon("./Resources/ok.png"), tr(""), AddView);
+	VedioOKButton->setObjectName(tr("VedioOKButton"));
 	VedioOKButton->setStatusTip(tr("返回"));
 	VedioOKButton->setFixedSize(QSize(45, 45));
 	VedioOKButton->setIconSize(QSize(45, 45));
+
+	QHBoxLayout *hLayout1 = new QHBoxLayout();
+	hLayout1->setSpacing(45);
+	hLayout1->addWidget(VedioFileButton);
+	hLayout1->addWidget(AddFramNum);
+
+	QHBoxLayout *hLayout = new QHBoxLayout();
+	hLayout->setSpacing(45);
+	hLayout->addWidget(BackButton);
+	hLayout->addWidget(VedioOKButton);
+
 	QVBoxLayout *vLayout = new QVBoxLayout(AddView);
 	vLayout->setAlignment(Qt::AlignHCenter);
 	vLayout->setSpacing(45);
 	vLayout->addWidget(VedioComboBox);
-	vLayout->addWidget(VedioFileButton);
-	QHBoxLayout *hLayout = new QHBoxLayout(AddView);
-	hLayout->addWidget(BackButton);
-	hLayout->addWidget(VedioOKButton);
+	vLayout->addLayout(hLayout1);
 	vLayout->addLayout(hLayout);
+
 	AddView->show();
 
 	connect(VedioComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(setVideoType(int)));
 	connect(VedioFileButton, SIGNAL(clicked()), this, SLOT(openLocalFile()));
+	connect(AddFramNum, SIGNAL(stateChanged(int)), this, SLOT(addFramNum(int)));
 	connect(BackButton, SIGNAL(clicked()), AddView, SLOT(close()));
 	connect(VedioOKButton, SIGNAL(clicked()), this, SLOT(VedioOK()));
 }
@@ -416,6 +434,44 @@ void VideoWall::addVideoView()
 void VideoWall::setVideoType(const int &index)
 {
 	taskName = VedioComboBox->itemText(index);
+	if (VedioComboBox->currentText() == tr("DVI-D"))
+	{
+		QCheckBox *AddFramNum = AddView->findChild<QCheckBox *>(tr("AddFramNum"));
+		AddFramNum->setVisible(true);
+	}
+	else if (VedioComboBox->currentText() == tr("CameraLink"))
+	{
+		QPushButton *VedioFileButton = AddView->findChild<QPushButton *>(tr("VedioFileButton"));
+		VedioFileButton->setVisible(false);
+		QCheckBox *AddFramNum = AddView->findChild<QCheckBox *>(tr("AddFramNum"));
+		AddFramNum->setVisible(false);
+	}
+}
+
+void VideoWall::stopAll()
+{
+	if (tasks.isEmpty()) return;
+	foreach(VideoTask *task, tasks)
+	{
+		task->video->stop();
+	}
+}
+
+void VideoWall::addFramNum(int value)
+{
+	FrameNumView = new QLabel(rendererWidgets[nth]);
+	FrameNumView->setWindowFlags(Qt::FramelessWindowHint);
+	FrameNumView->setFixedSize(50, 30);
+	FrameNumView->setFont(font);
+	FrameNumView->setContentsMargins(10,5,0,0);
+	FrameNumView->move(0, 0);
+	if (value) FrameNumView->setVisible(true);
+	else FrameNumView->setVisible(false);
+}
+
+void VideoWall::framCount(int value)
+{
+	if (FrameNumView) FrameNumView->setText(QString::number(value));
 }
 
 void VideoWall::VedioOK()
